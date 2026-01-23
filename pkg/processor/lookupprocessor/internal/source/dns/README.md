@@ -25,7 +25,7 @@ lookup:
       multiple_results: false # Optional: return all results or first only (default: false)
   cache:
     enabled: true # Optional: Enable caching (default: true)
-    size: 10000 # Optional: Maximum cache entries (default: 10000)
+    size: 1000 # Optional: Maximum cache entries (default: 1000)
     ttl: 5m # Optional: Time-to-live for cached entries (default: 5m)
     negative_ttl: 1m # Optional: TTL for "not found" entries (default: 1m)
 ```
@@ -46,7 +46,7 @@ lookup:
 | Field                | Type     | Required | Default | Description                                |
 | -------------------- | -------- | -------- | ------- | ------------------------------------------ |
 | `cache.enabled`      | bool     | No       | `true`  | Enable caching for DNS lookups             |
-| `cache.size`         | int      | No       | `10000` | Maximum number of entries in cache         |
+| `cache.size`         | int      | No       | `1000`  | Maximum number of entries in cache         |
 | `cache.ttl`          | duration | No       | `5m`    | Time-to-live for successful lookup results |
 | `cache.negative_ttl` | duration | No       | `1m`    | Time-to-live for "not found" entries       |
 

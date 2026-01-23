@@ -99,7 +99,7 @@ func (*lookupProcessorFactory) createDefaultConfig() component.Config {
 		},
 		Cache: lookupsource.CacheConfig{
 			Enabled:     true,
-			Size:        10000,
+			Size:        1000,
 			TTL:         5 * time.Minute,
 			NegativeTTL: 1 * time.Minute,
 		},
