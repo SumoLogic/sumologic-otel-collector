@@ -15,7 +15,7 @@ Refer to [FIPS section of installation documentation](https://help.sumologic.com
 
 ### MacOS
 
-We do not provde FIPS-compliant binary for macOS.
+We do not provide FIPS-compliant binary for macOS.
 
 ### Windows
 

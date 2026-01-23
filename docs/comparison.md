@@ -7,12 +7,12 @@
 - leverage the **Supported Sources** and **Supported Platforms** listed below
 - are looking for a single agent as opposed to managing multiple agents
 - are having scale issues with FluentD on Kubernetes Collection
+- want to use an open-source, vendor-neutral observability framework with broad community support
+- need unified collection of logs, metrics, and traces in a single agent
 
 **Avoid use cases** that:
 
-- are using an **Unsupported Source** or **Unsupported Platform**
-- require remote management and remote configuration
-- require Ingest Budgets
+- are using an **Unsupported Source**
 - require CPU target
 
 ## Support Matrix
@@ -53,6 +53,8 @@
 <li>Streaming Metrics
 <li>Transaction Tracing
 <li>All Telegraf Input Plugins
+<li>Docker Stats / Logs
+<li>Script Sources
 <li>Windows Log Event Receiver
 <li>Windows Performance Counters Receiver
 </li>
@@ -60,9 +62,7 @@
    </td>
    <td>
 <ul>
-<li>Script Sources
 <li>Script Actions
-<li>Docker Stats / Logs
 <li>Remote File
 <li>Windows Active Directory Source
 <li>Remote Windows Event Log Source
