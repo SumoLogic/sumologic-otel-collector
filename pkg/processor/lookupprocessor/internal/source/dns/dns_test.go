@@ -177,7 +177,7 @@ func TestIPv6Support(t *testing.T) {
 
 	t.Run("AAAA record lookup - IPv6 only", func(t *testing.T) {
 		cfg := &Config{
-			RecordType:      RecordTypeA,
+			RecordType:      RecordTypeAAAA,
 			Timeout:         10 * time.Second,
 			MultipleResults: true,
 		}
