@@ -34,7 +34,7 @@ func TestNewFactory(t *testing.T) {
 
 	// Default source type should be noop
 	assert.Equal(t, "noop", cfg.(*Config).Source.Type)
-	
+
 	// Cache should be enabled by default with appropriate settings
 	assert.True(t, cfg.(*Config).Cache.Enabled)
 	assert.Equal(t, 10000, cfg.(*Config).Cache.Size)
