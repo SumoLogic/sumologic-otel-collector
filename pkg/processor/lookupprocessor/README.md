@@ -5,7 +5,7 @@
 | Stability | [alpha]: logs |
 | Distributions | [] |
 
-[alpha]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#aplha
+[alpha]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#alpha
 
 ## Description
 
@@ -15,7 +15,7 @@ Currently supports logs, with metrics and traces support planned.
 
 ## Configuration
 
-```dns
+```yaml
 processors:
   lookup:
     source:
@@ -120,7 +120,6 @@ Performs DNS lookups to resolve hostnames to IP addresses or IP addresses to hos
 | Field | Description | Default |
 | ----- | ----------- | ------- |
 | `record_type` | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `A` |
-| `timeout` | Maximum time to wait for DNS resolution | `5s` |
 | `timeout` | Maximum time to wait for DNS resolution | `5s` |
 | `resolver` | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default | - |
 | `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only | `false` |
