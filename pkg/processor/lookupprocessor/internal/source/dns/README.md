@@ -15,24 +15,40 @@ This package provides DNS lookup capabilities for the lookup processor, supporti
 
 ## Configuration
 
-```dns
+```yaml
 lookup:
   sources:
     - type: dns
-      record_type: A             # "PTR", "A", or "AAAA"
-      timeout: 5s                # DNS query timeout
-      resolver: "8.8.8.8:53"     # Optional: custom DNS server
-      multiple_results: false    # Return all results or first only
+      record_type: PTR # Optional: "PTR", "A", or "AAAA" (default: "PTR")
+      timeout: 5s # Optional: DNS query timeout (default: 5s)
+      resolver: "8.8.8.8:53" # Optional: custom DNS server (default: nil, use system resolver)
+      multiple_results: false # Optional: return all results or first only (default: false)
+  cache:
+    enabled: true # Optional: Enable caching (default: true)
+    size: 10000 # Optional: Maximum cache entries (default: 10000)
+    ttl: 5m # Optional: Time-to-live for cached entries (default: 5m)
+    negative_ttl: 1m # Optional: TTL for "not found" entries (default: 1m)
 ```
 
 ### Configuration Options
 
-| Field | Type | Default | Description |
-| ----- | ---- | ------- | ----------- |
-| `record_type` | string | `A` | DNS record type: `A` (hostname→IPv4), `AAAA` (hostname→IPv6), or `PTR` (IP→hostname) |
-| `timeout` | duration | `5s` | Maximum time to wait for DNS resolution |
-| `resolver` | string | system default | Custom DNS server in `host:port` format (e.g., `8.8.8.8:53`) |
-| `multiple_results` | bool | `false` | If true, returns all results as comma-separated string; if false, returns first result only |
+#### DNS Source Options
+
+| Field              | Type     | Required | Default        | Description                                                                                 |
+| ------------------ | -------- | -------- | -------------- | ------------------------------------------------------------------------------------------- |
+| `record_type`      | string   | No       | `PTR`          | DNS record type: `PTR` (IP→hostname), `A` (hostname→IPv4), or `AAAA` (hostname→IPv6)        |
+| `timeout`          | duration | No       | `5s`           | Maximum time to wait for DNS resolution                                                     |
+| `resolver`         | string   | No       | system default | Custom DNS server in `host:port` format (e.g., `8.8.8.8:53`)                                |
+| `multiple_results` | bool     | No       | `false`        | If true, returns all results as comma-separated string; if false, returns first result only |
+
+#### Cache Options
+
+| Field                | Type     | Required | Default | Description                                |
+| -------------------- | -------- | -------- | ------- | ------------------------------------------ |
+| `cache.enabled`      | bool     | No       | `true`  | Enable caching for DNS lookups             |
+| `cache.size`         | int      | No       | `10000` | Maximum number of entries in cache         |
+| `cache.ttl`          | duration | No       | `5m`    | Time-to-live for successful lookup results |
+| `cache.negative_ttl` | duration | No       | `1m`    | Time-to-live for "not found" entries       |
 
 ## Performance Benchmarks
 
@@ -58,11 +74,11 @@ BenchmarkCacheEffectiveness/cached-4        34393330        175.6 ns/op     128 
 
 ### Performance Analysis
 
-| Scenario | Latency | Throughput | Memory per Op | Allocations |
-| -------- | ------- | ---------- | ------------- | ----------- |
-| **Uncached DNS** | ~240 μs (0.24 ms) | ~4,100 ops/sec | 3,648 B | 34 |
-| **Cached DNS** | ~175 ns (0.00017 ms) | ~5.7M ops/sec | 128 B | 1 |
-| **Parallel Cached** | ~98 ns | ~10M ops/sec | 128 B | 1 |
+| Scenario            | Latency              | Throughput     | Memory per Op | Allocations |
+| ------------------- | -------------------- | -------------- | ------------- | ----------- |
+| **Uncached DNS**    | ~240 μs (0.24 ms)    | ~4,100 ops/sec | 3,648 B       | 34          |
+| **Cached DNS**      | ~175 ns (0.00017 ms) | ~5.7M ops/sec  | 128 B         | 1           |
+| **Parallel Cached** | ~98 ns               | ~10M ops/sec   | 128 B         | 1           |
 
 ### Recommendations
 
@@ -108,3 +124,4 @@ go test -cover
 
 # Skip long-running benchmarks
 go test -short
+```

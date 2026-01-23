@@ -6,6 +6,7 @@ package lookupprocessor // import "github.com/SumoLogic/sumologic-otel-collector
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 	"go.opentelemetry.io/collector/component"
@@ -95,6 +96,12 @@ func (*lookupProcessorFactory) createDefaultConfig() component.Config {
 	return &Config{
 		Source: SourceConfig{
 			Type: "noop",
+		},
+		Cache: lookupsource.CacheConfig{
+			Enabled:     true,
+			Size:        10000,
+			TTL:         5 * time.Minute,
+			NegativeTTL: 1 * time.Minute,
 		},
 	}
 }

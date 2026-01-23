@@ -34,7 +34,7 @@ type Config struct {
 	// - PTR: reverse lookup, resolves IP address to hostname(s)
 	// - A: forward IPv4 lookup, resolves hostname to IPv4 address(es)
 	// - AAAA: forward IPv6 lookup, resolves hostname to IPv6 address(es)
-	// Default: "A"
+	// Default: "PTR"
 	RecordType RecordType `mapstructure:"record_type"`
 
 	// Timeout specifies the maximum time to wait for DNS resolution.
@@ -57,7 +57,7 @@ type Config struct {
 // Validate implements lookupsource.SourceConfig.
 func (c *Config) Validate() error {
 	switch c.RecordType {
-	case "", RecordTypeA, RecordTypeAAAA, RecordTypePTR:
+	case "", RecordTypePTR, RecordTypeA, RecordTypeAAAA:
 		// valid
 	default:
 		return errors.New("record_type must be 'PTR', 'A', or 'AAAA'")
@@ -88,7 +88,7 @@ func NewFactory() lookupsource.SourceFactory {
 
 func createDefaultConfig() lookupsource.SourceConfig {
 	return &Config{
-		RecordType:      RecordTypeA,
+		RecordType:      RecordTypePTR,
 		Timeout:         5 * time.Second,
 		MultipleResults: false,
 	}
@@ -104,7 +104,7 @@ func createSource(
 	// Apply defaults
 	recordType := dnsCfg.RecordType
 	if recordType == "" {
-		recordType = RecordTypeA
+		recordType = RecordTypePTR
 	}
 
 	timeout := dnsCfg.Timeout

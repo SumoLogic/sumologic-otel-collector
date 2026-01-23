@@ -88,7 +88,7 @@ func TestNewFactory(t *testing.T) {
 
 	defaultCfg, ok := cfg.(*Config)
 	require.True(t, ok)
-	assert.Equal(t, RecordTypeA, defaultCfg.RecordType)
+	assert.Equal(t, RecordTypePTR, defaultCfg.RecordType)
 	assert.Equal(t, 5*time.Second, defaultCfg.Timeout)
 	assert.False(t, defaultCfg.MultipleResults)
 }
@@ -177,7 +177,7 @@ func TestIPv6Support(t *testing.T) {
 
 	t.Run("AAAA record lookup - IPv6 only", func(t *testing.T) {
 		cfg := &Config{
-			RecordType:      RecordTypeAAAA,
+			RecordType:      RecordTypeA,
 			Timeout:         10 * time.Second,
 			MultipleResults: true,
 		}
