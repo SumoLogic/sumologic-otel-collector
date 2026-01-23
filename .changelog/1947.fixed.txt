@@ -1,1 +1,1 @@
-fixed the effective config comparision issue
+fix: fixed the effective config comparision issue
