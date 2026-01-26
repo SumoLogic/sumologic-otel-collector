@@ -9,7 +9,9 @@
 
 ## Description
 
-The lookup processor enriches telemetry signals by performing external lookups to retrieve additional data. It reads an attribute value, uses it as a key to query a lookup source, and sets the result as a new attribute.
+The lookup processor enriches telemetry signals by performing external
+lookups to retrieve additional data. It reads an attribute value, uses it as
+a key to query a lookup source, and sets the result as a new attribute.
 
 Currently supports logs, with metrics and traces support planned.
 
@@ -37,26 +39,26 @@ processors:
 
 ### Full Configuration
 
-| Field                | Description                                                    | Default |
-| -------------------- | -------------------------------------------------------------- | ------- |
-| `source.type`        | The source type identifier (`noop`, `yaml`, `dns`)             | `noop`  |
-| `attributes`         | List of attribute enrichment rules (required)                  | -       |
-| `cache.enabled`      | Enable caching of lookup results                               | source specific |
-| `cache.size`         | Maximum number of entries in the cache                         | source specific |
-| `cache.ttl`          | Time-to-live for cached successful results (0 = no expiration) | source specific |
-| `cache.negative_ttl` | Time-to-live for cached not-found results (0 = don't cache)    | source specific |
+| Field | Description | Default |
+| ----- | ----------- | ------- |
+| `source.type` | The source type identifier (`noop`, `yaml`, `dns`) | `noop` |
+| `attributes` | List of attribute enrichment rules (required) | - |
+| `cache.enabled` | Enable caching of lookup results | source specific |
+| `cache.size` | Max number of entries in the cache | source specific |
+| `cache.ttl` | TTL for cached results (0 = none) | source specific |
+| `cache.negative_ttl` | TTL for not-found (0 = none) | source specific |
 
 ### Attribute Configuration
 
 Each entry in `attributes` defines a lookup rule:
 
-| Field            | Description                                                    | Default  |
-| ---------------- | -------------------------------------------------------------- | -------- |
-| `key`            | Name of the attribute to set with the lookup result (required) | -        |
-| `from_attribute` | Name of the attribute containing the lookup key (required)     | -        |
-| `default`        | Value to use when lookup returns no result                     | -        |
-| `action`         | How to handle the result: `insert`, `update`, `upsert`         | `upsert` |
-| `context`        | Where to read/write attributes: `record`, `resource`           | `record` |
+| Field | Description | Default |
+| ----- | ----------- | ------- |
+| `key` | Name of the attribute to set with result (required) | - |
+| `from_attribute` | Name of the attribute with lookup key (required) | - |
+| `default` | Value to use when lookup returns no result | - |
+| `action` | How to handle result: `insert`, `update`, `upsert` | `upsert` |
+| `context` | Where to read/write: `record`, `resource` | `record` |
 
 ### Actions
 
@@ -66,7 +68,8 @@ Each entry in `attributes` defines a lookup rule:
 
 ### Context
 
-- **record**: Read from and write to record-level attributes (log records, spans, metric data points) (default)
+- **record**: Read from and write to record-level attributes
+  (log records, spans, metric data points) (default)
 - **resource**: Read from and write to resource attributes
 
 ## Built-in Sources
@@ -88,7 +91,8 @@ processors:
 
 ### yaml
 
-Loads key-value mappings from a YAML file. The file should contain a flat map of string keys to values.
+Loads key-value mappings from a YAML file. The file should contain
+a flat map of string keys to values.
 
 | Field  | Description                      | Default |
 | ------ | -------------------------------- | ------- |
@@ -115,14 +119,15 @@ svc-worker: "Background Worker"
 
 ### dns
 
-Performs DNS lookups to resolve hostnames to IP addresses or IP addresses to hostnames based on DNS record type.
+Performs DNS lookups to resolve hostnames to IPs or IPs to hostnames
+based on DNS record type.
 
-| Field              | Description                                                                                   | Default |
-| ------------------ | --------------------------------------------------------------------------------------------- | ------- |
-| `record_type`      | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `PTR`   |
-| `timeout`          | Maximum time to wait for DNS resolution                                                       | `5s`    |
-| `resolver`         | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default    | -       |
-| `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only   | `false` |
+| Field | Description | Default |
+| ----- | ----------- | ------- |
+| `record_type` | DNS record type: `A`, `AAAA`, or `PTR` | `PTR` |
+| `timeout` | Maximum time to wait for DNS resolution | `5s` |
+| `resolver` | Custom DNS server (format: "host:port") | - |
+| `multiple_results` | Return all results or first only | `false` |
 
 **A record lookup** (hostname to IPv4):
 
@@ -142,11 +147,13 @@ processors:
         from_attribute: server.hostname
 ```
 
-Detailed documentation for sources can be found under the respective source's readme.
+Detailed documentation for sources can be found under the respective
+source's readme.
 
 ## Caching
 
-All sources support caching to improve performance and reduce load on external systems. Configure caching at the processor level:
+All sources support caching to improve performance and reduce load on
+external systems. Configure caching at the processor level:
 
 ```yaml
 processors:
@@ -171,9 +178,12 @@ processors:
 - `ttl`: Time-to-live for successful lookups. Use `0` for no expiration
 - `negative_ttl`: Time-to-live for not-found results. Use `0` to not cache failures
 
-The cache uses an LRU (Least Recently Used) eviction policy when it reaches the size limit.
+The cache uses an LRU (Least Recently Used) eviction policy when it
+reaches the size limit.
 
-**Note:** Default values and caching behavior depend on the source implementation. For source-specific cache configuration details and recommendations, refer to the respective source's documentation.
+**Note:** Default values and caching behavior depend on the source
+implementation. For source-specific cache configuration details and
+recommendations, refer to the respective source's documentation.
 
 ## Benchmarks
 
@@ -185,7 +195,9 @@ make benchmark
 
 ### Processor Performance
 
-Measures the full processing pipeline including pdata operations, attribute iteration, value conversion, and telemetry. Uses noop source to isolate processor overhead from source implementation (Apple M4 Pro):
+Measures the full processing pipeline including pdata operations,
+attribute iteration, value conversion, and telemetry. Uses noop source to
+isolate processor overhead from source implementation (Apple M4 Pro):
 
 | Scenario               | ns/op   | B/op    | allocs/op |
 | ---------------------- | ------- | ------- | --------- |
