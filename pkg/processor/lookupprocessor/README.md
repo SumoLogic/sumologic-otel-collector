@@ -41,10 +41,10 @@ processors:
 | -------------------- | -------------------------------------------------------------- | ------- |
 | `source.type`        | The source type identifier (`noop`, `yaml`, `dns`)             | `noop`  |
 | `attributes`         | List of attribute enrichment rules (required)                  | -       |
-| `cache.enabled`      | Enable caching of lookup results                               | `false` |
-| `cache.size`         | Maximum number of entries in the cache                         | `1000`  |
-| `cache.ttl`          | Time-to-live for cached successful results (0 = no expiration) | `0`     |
-| `cache.negative_ttl` | Time-to-live for cached not-found results (0 = don't cache)    | `0`     |
+| `cache.enabled`      | Enable caching of lookup results                               | source specific |
+| `cache.size`         | Maximum number of entries in the cache                         | source specific |
+| `cache.ttl`          | Time-to-live for cached successful results (0 = no expiration) | source specific |
+| `cache.negative_ttl` | Time-to-live for cached not-found results (0 = don't cache)    | source specific |
 
 ### Attribute Configuration
 
@@ -119,7 +119,7 @@ Performs DNS lookups to resolve hostnames to IP addresses or IP addresses to hos
 
 | Field              | Description                                                                                   | Default |
 | ------------------ | --------------------------------------------------------------------------------------------- | ------- |
-| `record_type`      | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `A`     |
+| `record_type`      | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `PTR`   |
 | `timeout`          | Maximum time to wait for DNS resolution                                                       | `5s`    |
 | `resolver`         | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default    | -       |
 | `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only   | `false` |
