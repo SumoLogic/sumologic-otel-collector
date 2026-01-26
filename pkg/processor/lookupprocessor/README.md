@@ -1,9 +1,9 @@
 # Lookup Processor
 
-| Status | |
-| ------ | ----- |
-| Stability | [alpha]: logs |
-| Distributions | [] |
+| Status        |               |
+| ------------- | ------------- |
+| Stability     | [alpha]: logs |
+| Distributions | []            |
 
 [alpha]: https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#alpha
 
@@ -37,26 +37,26 @@ processors:
 
 ### Full Configuration
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `source.type` | The source type identifier (`noop`, `yaml`, `dns`) | `noop` |
-| `attributes` | List of attribute enrichment rules (required) | - |
-| `cache.enabled` | Enable caching of lookup results | `false` |
-| `cache.size` | Maximum number of entries in the cache | `1000` |
-| `cache.ttl` | Time-to-live for cached successful results (0 = no expiration) | `0` |
-| `cache.negative_ttl` | Time-to-live for cached not-found results (0 = don't cache) | `0` |
+| Field                | Description                                                    | Default |
+| -------------------- | -------------------------------------------------------------- | ------- |
+| `source.type`        | The source type identifier (`noop`, `yaml`, `dns`)             | `noop`  |
+| `attributes`         | List of attribute enrichment rules (required)                  | -       |
+| `cache.enabled`      | Enable caching of lookup results                               | `false` |
+| `cache.size`         | Maximum number of entries in the cache                         | `1000`  |
+| `cache.ttl`          | Time-to-live for cached successful results (0 = no expiration) | `0`     |
+| `cache.negative_ttl` | Time-to-live for cached not-found results (0 = don't cache)    | `0`     |
 
 ### Attribute Configuration
 
 Each entry in `attributes` defines a lookup rule:
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `key` | Name of the attribute to set with the lookup result (required) | - |
-| `from_attribute` | Name of the attribute containing the lookup key (required) | - |
-| `default` | Value to use when lookup returns no result | - |
-| `action` | How to handle the result: `insert`, `update`, `upsert` | `upsert` |
-| `context` | Where to read/write attributes: `record`, `resource` | `record` |
+| Field            | Description                                                    | Default  |
+| ---------------- | -------------------------------------------------------------- | -------- |
+| `key`            | Name of the attribute to set with the lookup result (required) | -        |
+| `from_attribute` | Name of the attribute containing the lookup key (required)     | -        |
+| `default`        | Value to use when lookup returns no result                     | -        |
+| `action`         | How to handle the result: `insert`, `update`, `upsert`         | `upsert` |
+| `context`        | Where to read/write attributes: `record`, `resource`           | `record` |
 
 ### Actions
 
@@ -90,9 +90,9 @@ processors:
 
 Loads key-value mappings from a YAML file. The file should contain a flat map of string keys to values.
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `path` | Path to the YAML file (required) | - |
+| Field  | Description                      | Default |
+| ------ | -------------------------------- | ------- |
+| `path` | Path to the YAML file (required) | -       |
 
 ```yaml
 processors:
@@ -117,12 +117,12 @@ svc-worker: "Background Worker"
 
 Performs DNS lookups to resolve hostnames to IP addresses or IP addresses to hostnames based on DNS record type.
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `record_type` | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `A` |
-| `timeout` | Maximum time to wait for DNS resolution | `5s` |
-| `resolver` | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default | - |
-| `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only | `false` |
+| Field              | Description                                                                                   | Default |
+| ------------------ | --------------------------------------------------------------------------------------------- | ------- |
+| `record_type`      | DNS record type: `A` (hostname to IPv4), `AAAA` (hostname to IPv6), or `PTR` (IP to hostname) | `A`     |
+| `timeout`          | Maximum time to wait for DNS resolution                                                       | `5s`    |
+| `resolver`         | Custom DNS server (format: "host:port", e.g., "8.8.8.8:53"). If empty, uses system default    | -       |
+| `multiple_results` | If true, returns all results as comma-separated string; if false, returns first result only   | `false` |
 
 **A record lookup** (hostname to IPv4):
 
@@ -156,9 +156,9 @@ processors:
       record_type: A
     cache:
       enabled: true
-      size: 1000           # Max entries
-      ttl: 5m              # Cache successful lookups for 5 minutes
-      negative_ttl: 1m     # Cache failed lookups for 1 minute
+      size: 1000 # Max entries
+      ttl: 5m # Cache successful lookups for 5 minutes
+      negative_ttl: 1m # Cache failed lookups for 1 minute
     attributes:
       - key: ip
         from_attribute: hostname
@@ -166,12 +166,14 @@ processors:
 
 **Cache Configuration:**
 
-- `enabled`: Enable/disable caching (default: `false`)
-- `size`: Maximum number of entries (default: `1000`)
-- `ttl`: Time-to-live for successful lookups. Use `0` for no expiration (default: `0`)
-- `negative_ttl`: Time-to-live for not-found results. Use `0` to not cache failures (default: `0`)
+- `enabled`: Enable/disable caching
+- `size`: Maximum number of entries
+- `ttl`: Time-to-live for successful lookups. Use `0` for no expiration
+- `negative_ttl`: Time-to-live for not-found results. Use `0` to not cache failures
 
 The cache uses an LRU (Least Recently Used) eviction policy when it reaches the size limit.
+
+**Note:** Default values and caching behavior depend on the source implementation. For source-specific cache configuration details and recommendations, refer to the respective source's documentation (e.g., [yaml/README.md](internal/source/yaml/README.md) for the YAML source, [dns/README.md](internal/source/dns/README.md) for the DNS source).
 
 ## Benchmarks
 
@@ -185,13 +187,13 @@ make benchmark
 
 Measures the full processing pipeline including pdata operations, attribute iteration, value conversion, and telemetry. Uses noop source to isolate processor overhead from source implementation (Apple M4 Pro):
 
-| Scenario | ns/op | B/op | allocs/op |
-| -------- | ----- | ---- | --------- |
-| 1 log, 1 attribute | 323 | 696 | 20 |
-| 10 logs, 1 attribute | 1,274 | 3,216 | 74 |
-| 100 logs, 1 attribute | 11,076 | 28,512 | 614 |
-| 100 logs, 3 attributes | 21,604 | 54,113 | 1,014 |
-| 1000 logs, 1 attribute | 122,447 | 280,617 | 6,014 |
+| Scenario               | ns/op   | B/op    | allocs/op |
+| ---------------------- | ------- | ------- | --------- |
+| 1 log, 1 attribute     | 323     | 696     | 20        |
+| 10 logs, 1 attribute   | 1,274   | 3,216   | 74        |
+| 100 logs, 1 attribute  | 11,076  | 28,512  | 614       |
+| 100 logs, 3 attributes | 21,604  | 54,113  | 1,014     |
+| 1000 logs, 1 attribute | 122,447 | 280,617 | 6,014     |
 
 Source-specific benchmarks are available in each source's README.
 
