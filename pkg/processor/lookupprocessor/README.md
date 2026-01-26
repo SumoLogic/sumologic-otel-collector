@@ -173,7 +173,7 @@ processors:
 
 The cache uses an LRU (Least Recently Used) eviction policy when it reaches the size limit.
 
-**Note:** Default values and caching behavior depend on the source implementation. For source-specific cache configuration details and recommendations, refer to the respective source's documentation (e.g., [yaml/README.md](internal/source/yaml/README.md) for the YAML source, [dns/README.md](internal/source/dns/README.md) for the DNS source).
+**Note:** Default values and caching behavior depend on the source implementation. For source-specific cache configuration details and recommendations, refer to the respective source's documentation.
 
 ## Benchmarks
 
