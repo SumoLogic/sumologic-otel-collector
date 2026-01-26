@@ -1,3 +1,5 @@
 endpoint: wss://127.0.0.1:4320/v1/opamp
 instance_uid: 01BX5ZZKBKACTAV9WEVGEMMVRZ
 remote_configuration_directory: /tmp/opamp.d
+accepts_remote_configuration: true
+reports_health: true

@@ -223,9 +223,18 @@ func TestGetAgentCapabilities(t *testing.T) {
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
 
-	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4102))
+	// With remote config and health reporting enabled (default)
+	// ReportsEffectiveConfig (4) + AcceptsRemoteConfig (2) + ReportsRemoteConfig (4096) + ReportsHealth (2048) = 6150
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(6150))
 
+	// With remote config disabled but health reporting enabled (default)
+	// ReportsEffectiveConfig (4) + ReportsHealth (2048) = 2052
 	cfg.AcceptsRemoteConfiguration = false
+	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(2052))
+
+	// With both remote config and health reporting disabled
+	// ReportsEffectiveConfig (4) = 4
+	cfg.ReportsHealth = false
 	assert.Equal(t, o.getAgentCapabilities(), protobufs.AgentCapabilities(4))
 }
 
@@ -399,4 +408,33 @@ func TestNewOpampAgentAttributes(t *testing.T) {
 	assert.Equal(t, "otelcol-sumo", o.agentType)
 	assert.Equal(t, "sumo.0", o.agentVersion)
 	assert.Equal(t, "7RK6DW2K4V8RCSQBKZ02EJ84FC", o.instanceId.String())
+}
+
+func TestHealthReportingCapabilities(t *testing.T) {
+	// Test with health reporting enabled (default)
+	cfg, set := defaultSetup()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+	capabilities := o.getAgentCapabilities()
+	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth != 0)
+
+	// Test with health reporting disabled
+	cfg.ReportsHealth = false
+	o, err = newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+	capabilities = o.getAgentCapabilities()
+	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth == 0)
+}
+
+func TestHealthReportingInitialization(t *testing.T) {
+	cfg, set := defaultSetup()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// Verify health reporting fields are initialized
+	assert.NotNil(t, o.statusSubscriptionWg)
+	assert.NotNil(t, o.componentHealthWg)
+	assert.NotNil(t, o.lifetimeCtx)
+	assert.NotNil(t, o.lifetimeCancel)
+	assert.NotNil(t, o.readyCh)
 }

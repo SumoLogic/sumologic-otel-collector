@@ -44,6 +44,9 @@ type Config struct {
 
 	// Flag to toggle new config merge flow introduced for collector tag edit feature
 	DisableTagReplacement bool `mapstructure:"disable_tag_replacement"`
+
+	// ReportsHealth enables the OpAMP ReportsHealth capability (default: true)
+	ReportsHealth bool `mapstructure:"reports_health"`
 }
 
 // CreateDefaultClientConfig returns default http client settings

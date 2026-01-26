@@ -22,8 +22,10 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sync"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componentstatus"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
@@ -33,6 +35,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status"
 
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -69,6 +73,28 @@ type opampAgent struct {
 	opampClient client.OpAMPClient
 
 	remoteConfigStatus *protobufs.RemoteConfigStatus
+
+	// Health reporting fields
+	statusAggregator     statusAggregator
+	statusSubscriptionWg *sync.WaitGroup
+	componentHealthWg    *sync.WaitGroup
+	componentStatusCh    chan *eventSourcePair
+	startTimeUnixNano    uint64
+	lifetimeCtx          context.Context
+	lifetimeCancel       context.CancelFunc
+	readyCh              chan struct{}
+}
+
+// statusAggregator is an interface for tracking component status
+type statusAggregator interface {
+	Subscribe(scope status.Scope, verbosity status.Verbosity) (<-chan *status.AggregateStatus, status.UnsubscribeFunc)
+	RecordStatus(source *componentstatus.InstanceID, event *componentstatus.Event)
+}
+
+// eventSourcePair represents a component status event and its source
+type eventSourcePair struct {
+	source *componentstatus.InstanceID
+	event  *componentstatus.Event
 }
 
 // opampLogShim translates between zap and opamp-go's bespoke logging interface
@@ -99,6 +125,9 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	if err := o.opampClient.SetAgentDescription(o.agentDescription); err != nil {
 		return err
 	}
+
+	// Initialize health reporting
+	o.initHealthReporting()
 
 	if err := o.getAuthExtension(); err != nil {
 		return err
@@ -133,8 +162,51 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	return nil
 }
 
+// ComponentStatusChanged is called when a component's status changes
+func (o *opampAgent) ComponentStatusChanged(
+	source *componentstatus.InstanceID,
+	event *componentstatus.Event,
+) {
+	defer func() {
+		if r := recover(); r != nil {
+			o.logger.Info(
+				"discarding event received after shutdown",
+				zap.Any("source", source),
+				zap.Any("event", event),
+			)
+		}
+	}()
+	o.componentStatusCh <- &eventSourcePair{source: source, event: event}
+}
+
+// Ready is called when the collector pipeline is ready
+func (o *opampAgent) Ready() error {
+	close(o.readyCh)
+	return nil
+}
+
+// NotReady is called when the collector pipeline is not ready
+func (o *opampAgent) NotReady() error {
+	// Recreate the channel if it was already closed
+	o.readyCh = make(chan struct{})
+	return nil
+}
+
 func (o *opampAgent) Shutdown(ctx context.Context) error {
 	o.logger.Debug("OpAMP agent shutting down...")
+
+	// Cancel the lifetime context
+	if o.lifetimeCancel != nil {
+		o.lifetimeCancel()
+	}
+
+	// Wait for health reporting goroutines to finish
+	if o.componentStatusCh != nil {
+		close(o.componentStatusCh)
+		o.componentHealthWg.Wait()
+	}
+	o.statusSubscriptionWg.Wait()
+
 	if o.opampClient != nil {
 		o.logger.Debug("Stopping OpAMP client...")
 		err := o.opampClient.Stop(ctx)
@@ -293,12 +365,19 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		}
 	}
 
+	lifetimeCtx, lifetimeCancel := context.WithCancel(context.Background())
+
 	agent := &opampAgent{
-		cfg:          cfg,
-		logger:       logger,
-		agentType:    agentType,
-		agentVersion: agentVersion,
-		instanceId:   uid,
+		cfg:                  cfg,
+		logger:               logger,
+		agentType:            agentType,
+		agentVersion:         agentVersion,
+		instanceId:           uid,
+		statusSubscriptionWg: &sync.WaitGroup{},
+		componentHealthWg:    &sync.WaitGroup{},
+		lifetimeCtx:          lifetimeCtx,
+		lifetimeCancel:       lifetimeCancel,
+		readyCh:              make(chan struct{}),
 	}
 
 	return agent, nil
@@ -311,6 +390,10 @@ func (o *opampAgent) getAgentCapabilities() protobufs.AgentCapabilities {
 		c = c |
 			protobufs.AgentCapabilities_AgentCapabilities_AcceptsRemoteConfig |
 			protobufs.AgentCapabilities_AgentCapabilities_ReportsRemoteConfig
+	}
+
+	if o.cfg.ReportsHealth {
+		c = c | protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth
 	}
 
 	return c
@@ -584,4 +667,145 @@ func loadConfigAndValidateWithSettings(factories otelcol.Factories, set otelcol.
 		return nil, err
 	}
 	return cfg, nil
+}
+
+// initHealthReporting initializes health reporting if enabled
+func (o *opampAgent) initHealthReporting() {
+	if !o.cfg.ReportsHealth {
+		return
+	}
+
+	// Set initial health to false (unhealthy) until we receive status updates
+	o.setHealth(&protobufs.ComponentHealth{Healthy: false})
+
+	// Create status aggregator if not already created
+	if o.statusAggregator == nil {
+		o.statusAggregator = status.NewAggregator(status.PriorityPermanent)
+	}
+
+	// Subscribe to status updates
+	statusChan, unsubscribeFunc := o.statusAggregator.Subscribe(status.ScopeAll, status.Verbose)
+	o.statusSubscriptionWg.Add(1)
+	go o.statusAggregatorEventLoop(unsubscribeFunc, statusChan)
+
+	// Create component status channel and start event loop
+	o.componentStatusCh = make(chan *eventSourcePair)
+	o.componentHealthWg.Add(1)
+	go o.componentHealthEventLoop()
+}
+
+// statusAggregatorEventLoop processes status updates from the aggregator
+func (o *opampAgent) statusAggregatorEventLoop(unsubscribeFunc status.UnsubscribeFunc, statusChan <-chan *status.AggregateStatus) {
+	defer func() {
+		unsubscribeFunc()
+		o.statusSubscriptionWg.Done()
+	}()
+
+	for {
+		select {
+		case <-o.lifetimeCtx.Done():
+			return
+		case statusUpdate, ok := <-statusChan:
+			if !ok {
+				return
+			}
+
+			if statusUpdate == nil || statusUpdate.Status() == componentstatus.StatusNone {
+				continue
+			}
+
+			componentHealth := convertComponentHealth(statusUpdate)
+			o.setHealth(componentHealth)
+		}
+	}
+}
+
+// componentHealthEventLoop processes component status change events
+func (o *opampAgent) componentHealthEventLoop() {
+	var eventQueue []*eventSourcePair
+
+	defer o.componentHealthWg.Done()
+
+	// Queue events until the pipeline is ready
+	for loop := true; loop; {
+		select {
+		case esp, ok := <-o.componentStatusCh:
+			if !ok {
+				return
+			}
+			// If the component is starting, process immediately
+			if esp.event.Status() != componentstatus.StatusStarting {
+				eventQueue = append(eventQueue, esp)
+				continue
+			}
+			o.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-o.readyCh:
+			// Process all queued events
+			for _, esp := range eventQueue {
+				o.statusAggregator.RecordStatus(esp.source, esp.event)
+			}
+			eventQueue = nil
+			loop = false
+		case <-o.lifetimeCtx.Done():
+			return
+		}
+	}
+
+	// After pipeline is ready, process events as they come
+	for {
+		select {
+		case esp, ok := <-o.componentStatusCh:
+			if !ok {
+				return
+			}
+			o.statusAggregator.RecordStatus(esp.source, esp.event)
+		case <-o.lifetimeCtx.Done():
+			return
+		}
+	}
+}
+
+// setHealth reports health status to the OpAMP server
+func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
+	if !o.cfg.ReportsHealth || o.opampClient == nil {
+		return
+	}
+
+	// Set start time on first healthy report
+	if ch.Healthy && o.startTimeUnixNano == 0 {
+		o.startTimeUnixNano = ch.StatusTimeUnixNano
+		ch.StartTimeUnixNano = ch.StatusTimeUnixNano
+	} else {
+		ch.StartTimeUnixNano = o.startTimeUnixNano
+	}
+
+	if err := o.opampClient.SetHealth(ch); err != nil {
+		o.logger.Error("Could not report health to OpAMP server", zap.Error(err))
+	}
+}
+
+// convertComponentHealth converts a status update to OpAMP ComponentHealth
+func convertComponentHealth(statusUpdate *status.AggregateStatus) *protobufs.ComponentHealth {
+	isHealthy := statusUpdate.Status() == componentstatus.StatusOK
+
+	componentHealth := &protobufs.ComponentHealth{
+		Healthy:            isHealthy,
+		Status:             statusUpdate.Status().String(),
+		StatusTimeUnixNano: uint64(statusUpdate.Timestamp().UnixNano()),
+	}
+
+	// Add error message if present
+	if statusUpdate.Err() != nil {
+		componentHealth.LastError = statusUpdate.Err().Error()
+	}
+
+	// Add nested component health if present
+	if len(statusUpdate.ComponentStatusMap) > 0 {
+		componentHealth.ComponentHealthMap = map[string]*protobufs.ComponentHealth{}
+		for comp, compState := range statusUpdate.ComponentStatusMap {
+			componentHealth.ComponentHealthMap[comp] = convertComponentHealth(compState)
+		}
+	}
+
+	return componentHealth
 }
