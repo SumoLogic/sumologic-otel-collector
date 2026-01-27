@@ -16,28 +16,6 @@ needs a lookup source, available sources are listed in Built-in Sources section.
 
 Currently supports logs, with metrics and traces support planned.
 
-## Configuration
-
-```yaml
-processors:
-  lookup:
-    source:
-      type: dns
-      record_type: A
-      timeout: 5s
-    cache:
-      enabled: true
-      size: 1000
-      ttl: 5m
-      negative_ttl: 1m
-    attributes:
-      - key: server.ip
-        from_attribute: server.hostname
-        default: "unknown"
-        action: upsert
-        context: record
-```
-
 ### Full Configuration
 
 | Field                | Description                                        | Default         |
@@ -72,6 +50,28 @@ Each entry in `attributes` defines a lookup rule:
 - **record**: Read from and write to record-level attributes
   (log records, spans, metric data points) (default)
 - **resource**: Read from and write to resource attributes
+
+## Example Configuration
+
+```yaml
+processors:
+  lookup:
+    source:
+      type: dns
+      record_type: A
+      timeout: 5s
+    cache:
+      enabled: true
+      size: 1000
+      ttl: 5m
+      negative_ttl: 1m
+    attributes:
+      - key: server.ip
+        from_attribute: server.hostname
+        default: "unknown"
+        action: upsert
+        context: record
+```
 
 ## Built-in Sources
 
