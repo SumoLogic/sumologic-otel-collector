@@ -388,6 +388,44 @@ func TestTimeout(t *testing.T) {
 	}
 }
 
+func TestLongTimeout(t *testing.T) {
+	factory := NewFactory()
+	
+	t.Run("DNS resolution with timeout greater than 5 seconds - unreachable resolver", func(t *testing.T) {
+		// Use a DNS server that doesn't exist or is unreachable
+		// This will cause the lookup to wait up to the timeout period, simulating slow DNS
+		cfg := &Config{
+			RecordType: RecordTypeA,
+			Timeout:    7 * time.Second, // Greater than 5 seconds
+			Resolver:   "192.0.2.1:53",  // TEST-NET-1, reserved documentation IP that is unreachable
+		}
+
+		source, err := factory.CreateSource(context.Background(), lookupsource.CreateSettings{}, cfg)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		start := time.Now()
+		
+		// This should timeout after ~7 seconds trying to reach the unreachable resolver
+		// This actually simulates a DNS resolution that takes more than 5 seconds
+		_, found, err := source.Lookup(ctx, "example.com")
+		elapsed := time.Since(start)
+
+		t.Logf("Lookup took %v with unreachable resolver", elapsed)
+
+		// Should timeout or fail, and should take several seconds attempting
+		if err != nil || !found {
+			// Expected - the resolver is unreachable
+			// Verify it took a significant amount of time (at least 7 seconds)
+			assert.GreaterOrEqual(t, elapsed.Seconds(), 7.0, 
+				"DNS resolution should take at least 7 seconds with unreachable resolver")
+			assert.LessOrEqual(t, elapsed.Seconds(), 8.0,
+				"DNS resolution should timeout around the configured 7 second timeout")
+			t.Logf("Successfully tested >7 second DNS resolution behavior")
+		}
+	})
+}
+
 func TestCustomResolver(t *testing.T) {
 	factory := NewFactory()
 	cfg := &Config{
