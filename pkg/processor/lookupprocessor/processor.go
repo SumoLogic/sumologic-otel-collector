@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package lookupprocessor // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor"
+package lookupprocessor
 
 import (
 	"context"

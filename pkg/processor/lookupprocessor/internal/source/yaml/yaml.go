@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package yaml provides a YAML file-based lookup source.
-package yaml // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/yaml"
+package yaml
 
 import (
 	"context"

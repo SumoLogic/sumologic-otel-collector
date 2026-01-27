@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package noop provides a no-operation lookup source for testing.
-package noop // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/noop"
+package noop
 
 import (
 	"context"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package dns provides a DNS lookup source for forward and reverse DNS resolution.
-package dns // import "github.com/SumoLogic/sumologic-otel-collector/pkg/processor/lookupprocessor/internal/source/dns"
+package dns
 
 import (
 	"context"

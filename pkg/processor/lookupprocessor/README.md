@@ -11,7 +11,8 @@
 
 The lookup processor enriches telemetry signals by performing external
 lookups to retrieve additional data. It reads an attribute value, uses it as
-a key to query a lookup source, and sets the result as a new attribute.
+a key to query a lookup source, and sets the result as a new attribute. Lookup processor
+needs a lookup source, available sources are listed in Built-in Sources section.
 
 Currently supports logs, with metrics and traces support planned.
 
@@ -39,26 +40,26 @@ processors:
 
 ### Full Configuration
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `source.type` | The source type identifier (`noop`, `yaml`, `dns`) | `noop` |
-| `attributes` | List of attribute enrichment rules (required) | - |
-| `cache.enabled` | Enable caching of lookup results | source specific |
-| `cache.size` | Max number of entries in the cache | source specific |
-| `cache.ttl` | TTL for cached results (0 = none) | source specific |
-| `cache.negative_ttl` | TTL for not-found (0 = none) | source specific |
+| Field                | Description                                        | Default         |
+| -------------------- | -------------------------------------------------- | --------------- |
+| `source.type`        | The source type identifier (`noop`, `yaml`, `dns`) | `noop`          |
+| `attributes`         | List of attribute enrichment rules (required)      | -               |
+| `cache.enabled`      | Enable caching of lookup results                   | source specific |
+| `cache.size`         | Max number of entries in the cache                 | source specific |
+| `cache.ttl`          | TTL for cached results (0 = none)                  | source specific |
+| `cache.negative_ttl` | TTL for not-found (0 = none)                       | source specific |
 
 ### Attribute Configuration
 
 Each entry in `attributes` defines a lookup rule:
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `key` | Name of the attribute to set with result (required) | - |
-| `from_attribute` | Name of the attribute with lookup key (required) | - |
-| `default` | Value to use when lookup returns no result | - |
-| `action` | How to handle result: `insert`, `update`, `upsert` | `upsert` |
-| `context` | Where to read/write: `record`, `resource` | `record` |
+| Field            | Description                                         | Default  |
+| ---------------- | --------------------------------------------------- | -------- |
+| `key`            | Name of the attribute to set with result (required) | -        |
+| `from_attribute` | Name of the attribute with lookup key (required)    | -        |
+| `default`        | Value to use when lookup returns no result          | -        |
+| `action`         | How to handle result: `insert`, `update`, `upsert`  | `upsert` |
+| `context`        | Where to read/write: `record`, `resource`           | `record` |
 
 ### Actions
 
@@ -122,12 +123,12 @@ svc-worker: "Background Worker"
 Performs DNS lookups to resolve hostnames to IPs or IPs to hostnames
 based on DNS record type.
 
-| Field | Description | Default |
-| ----- | ----------- | ------- |
-| `record_type` | DNS record type: `A`, `AAAA`, or `PTR` | `PTR` |
-| `timeout` | Maximum time to wait for DNS resolution | `5s` |
-| `resolver` | Custom DNS server (format: "host:port") | - |
-| `multiple_results` | Return all results or first only | `false` |
+| Field              | Description                             | Default |
+| ------------------ | --------------------------------------- | ------- |
+| `record_type`      | DNS record type: `A`, `AAAA`, or `PTR`  | `PTR`   |
+| `timeout`          | Maximum time to wait for DNS resolution | `5s`    |
+| `resolver`         | Custom DNS server (format: "host:port") | -       |
+| `multiple_results` | Return all results or first only        | `false` |
 
 **A record lookup** (hostname to IPv4):
 
