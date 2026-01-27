@@ -2528,6 +2528,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/disk
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.144.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.144.0/receiver/dockerstatsreceiver/documentation.md
+[sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/sumologicprocessor
 [mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
 [ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/pkg/ottl/ottlfuncs#functions
 [forward-data]: https://help.sumologic.com/docs/manage/data-archiving/installed-collectors/
