@@ -62,6 +62,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |          [azureeventhub][azureeventhubreceiver]          |                 [`k8s_tagger`][k8sprocessor]                 |    [prometheus][prometheusexporter]    |   [headerssetter][headerssetterextension]   |                                     |
 |                  [bigip][bigipreceiver]                  |           [k8sattributes][k8sattributesprocessor]            |    [sumologic] [sumologicexporter]     |    [health_check][healthcheckextension]     |                                     |
 |                 [carbon][carbonreceiver]                 |                [logdedup][logdedupprocessor]                 |        [syslog][syslogexporter]        |        [host_observer][hostobserver]        |                                     |
+|                                                          |                   [`lookup`][lookupprocessor]                |                                        |                                             |                                     |
 |                                                          |       [logstransformprocessor][logstransformprocessor]       |                                        |                                             |                                     |
 |                 [chrony][chronyreceiver]                 |           [memory_limiter][memorylimiterprocessor]           |           [nop][nopexporter]           |       [http_forwarder][httpforwarder]       |                                     |
 |             [cloudflare][cloudflarereceiver]             |        [`metric_frequency`][metricfrequencyprocessor]        |                                        |           [jaegerremotesampling]            |                                     |
@@ -309,3 +310,4 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/connector/spanmetricsconnector
 [geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/geoipprocessor
 [unrollprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/unrollprocessor
+[lookupprocessor]:./pkg/processor/lookupprocessor
