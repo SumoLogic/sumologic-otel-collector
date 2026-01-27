@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
-## [v0.143.0-sumo-0]
+## [v0.144.0-sumo-0]
+
+### Released 2026-01-27
+
+### Added
+
+- feat(dnslookup processor): Implementation of dns lookup processor [#1948]
+
+### Fixed
+
+- fix: fixed the effective config comparision issue [#1947]
+
+[#1948]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1948
+[#1947]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1947
+
+[v0.144.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.144.0-sumo-0## [v0.143.0-sumo-0]
 
 ### Released 2026-01-15
 
@@ -47,8 +62,8 @@ processors:
     from_attribute: X-Tenant
     default_exporters: [jaeger]
     table:
-    - value: acme
-      exporters: [jaeger/acme]
+      - value: acme
+        exporters: [jaeger/acme]
 exporters:
   jaeger:
     endpoint: localhost:14250
@@ -68,9 +83,9 @@ connectors:
     match_once: true
     default_pipelines: [traces/jaeger]
     table:
-    - context: request
-      condition: request["X-Tenant"] == "acme"
-      pipelines: [traces/jaeger/acme]
+      - context: request
+        condition: request["X-Tenant"] == "acme"
+        pipelines: [traces/jaeger/acme]
 exporters:
   jaeger:
     endpoint: localhost:14250
@@ -96,7 +111,6 @@ service:
 - chore: upgrade collector to 0.143.0 [#1935]
 
 [#1935]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1935
-
 [v0.143.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.143.0-sumo-0
 
 ## [v0.141.0-sumo-0]
