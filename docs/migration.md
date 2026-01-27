@@ -1329,7 +1329,7 @@ processors:
           - key: container.name
             value: sumo-container-.*
 
-  sumologicschema/dockerstats:
+  sumologic/dockerstats:
     translate_docker_metrics: true
 
 exporters:
@@ -1344,7 +1344,7 @@ service:
       - docker_stats
       processors:
       - filter/dockerstats
-      - sumologicschema/dockerstats
+      - sumologic/dockerstats
       exporters:
       - sumologic/dockerstats
 ```
@@ -1516,11 +1516,11 @@ The table below shows how some metrics commonly used by the Installed Collector 
 
 Full list of metrics available in this receiver can be found in the [documentation][dockerstatsmetrics].
 
-Unfortunately, Sumo Logic apps don't work with these metric names yet. To convieniently translate them, use [Sumo Logic Schema Processor][sumologicschemaprocessor]:
+Unfortunately, Sumo Logic apps don't work with these metric names yet. To conveniently translate them, use [Sumo Logic Processor][sumologicprocessor]:
 
 ```yaml
 processors:
-  sumologicschema/dockerstats:
+  sumologic/dockerstats:
     translate_docker_metrics: true
 ```
 
@@ -1534,12 +1534,12 @@ The metadata sent by Installed Collector correspond to the metadata sent by Open
 - `container.Name` corresponds to `container.name`
 - `container.ImageID` and `container.ImageFullID` are not being emitted
 
-These metadata is represented as resource attributes and can be translated by using [Sumo Logic Schema Processor][sumologicschemaprocessor]
+These metadata is represented as resource attributes and can be translated by using [Sumo Logic Processor][sumologicprocessor]
 in the same way as for translating metric names, by using the following config:
 
 ```yaml
 processors:
-  sumologicschema/dockerstats:
+  sumologic/dockerstats:
     translate_docker_metrics: true
 ```
 
@@ -2528,7 +2528,6 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [telegraf-input-disk]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/disk
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.144.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.144.0/receiver/dockerstatsreceiver/documentation.md
-[sumologicschemaprocessor]: ../pkg/processor/sumologicschemaprocessor/README.md
 [mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
 [ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/pkg/ottl/ottlfuncs#functions
 [forward-data]: https://help.sumologic.com/docs/manage/data-archiving/installed-collectors/
