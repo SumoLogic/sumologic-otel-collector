@@ -55,13 +55,13 @@ func SetCollectorNameAction(ctx *actionContext) error {
 		if err != nil {
 			return fmt.Errorf("couldn't set collector name: error evaluating yq expression: %s", err)
 		}
-		if len(result) > 0 {
-			doc = []byte(result)
-			_, err = writer(doc)
-			if err != nil {
-				return fmt.Errorf("couldn't write updated config: %s", err)
-			}
-		}
+
+		doc = []byte(result)
 	}
+	_, err = writer(doc)
+	if err != nil {
+		return fmt.Errorf("couldn't write updated config: %s", err)
+	}
+
 	return nil
 }
