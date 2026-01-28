@@ -425,14 +425,12 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				logger.Warn("Unable to close config file", zap.Error(err))
-			}
-		}()
 
 		_, err = f.Write(v.Body)
 		if err != nil {
+			if cerr := f.Close(); cerr != nil {
+				logger.Warn("Unable to close config file after write error", zap.Error(cerr))
+			}
 			return err
 		}
 
@@ -451,16 +449,19 @@ func (o *opampAgent) saveEffectiveConfig(dir string) error {
 		if errValidate != nil {
 			logger.Error("Validation Failed", zap.Error(errValidate))
 			// Close the file before attempting to delete it (required for Windows)
-			if err := f.Close(); err != nil {
-				logger.Warn("Unable to close config file before deletion", zap.Error(err))
+			if cerr := f.Close(); cerr != nil {
+				logger.Warn("Unable to close config file before deletion", zap.Error(cerr))
 			}
-			err = os.Remove(p)
-			if err != nil {
+			if err := os.Remove(p); err != nil {
 				o.logger.Warn("Unable to delete invalid config file", zap.String("invalid config filename", p), zap.Error(err))
 			}
 			return fmt.Errorf("cannot validate config: %v", errValidate)
 		}
 		logger.Info("Config Validation Successful")
+
+		if err := f.Close(); err != nil {
+			logger.Warn("Unable to close config file", zap.Error(err))
+		}
 	}
 
 	return nil
