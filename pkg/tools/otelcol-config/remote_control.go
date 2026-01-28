@@ -71,6 +71,7 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 				"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
 				"time_zone":                       "UTC",
 				"clobber":                         false,
+				"collector_name":                  "my-collector",
 			},
 		},
 		"receivers": map[string]any{
