@@ -1,0 +1,1 @@
+fix: fixed the double close issue for config files
