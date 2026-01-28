@@ -298,6 +298,93 @@ func TestSaveEffectiveConfigWithInvalidConfig(t *testing.T) {
 	}
 }
 
+func TestInvalidConfigNotPersistedAfterValidationFailure(t *testing.T) {
+	tests := []struct {
+		name         string
+		file         string
+		errorMessage string
+	}{
+		{"InvalidApacheURIConfig", "testdata/opamp.d/opamp-invalid-apache-uri-config.yaml", "query must be 'auto'"},
+		{"InvalidApacheKeysConfig", "testdata/opamp.d/opamp-invalid-apache-keys-config.yaml", "has invalid keys: endpointt"},
+		{"InvalidPipelineConfigUndefinedComponent", "testdata/opamp.d/opamp-invalid-pipeline-undefined-component-config.yaml", "references receiver \"file\" which is not configured"},
+		{"InvalidPipelineConfigNoExporter", "testdata/opamp.d/opamp-invalid-pipeline-no-exporter-config.yaml", "must have at least one exporter"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := os.MkdirTemp("", "opamp.d")
+			assert.NoError(t, err)
+			defer os.RemoveAll(d)
+
+			cfg, set := setupWithRemoteConfig(t, d)
+			o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+			assert.NoError(t, err)
+
+			path := filepath.Join(tt.file)
+			rb, err := os.ReadFile(path)
+			assert.NoError(t, err)
+
+			configFileName := "invalid-config.yaml"
+			o.effectiveConfig = map[string]*protobufs.AgentConfigFile{
+				configFileName: {
+					Body: rb,
+				},
+			}
+
+			err = o.saveEffectiveConfig(d)
+
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.errorMessage)
+
+			invalidConfigPath := filepath.Join(d, configFileName)
+			_, statErr := os.Stat(invalidConfigPath)
+			assert.True(t, os.IsNotExist(statErr), "invalid config file should not exist on disk after validation failure")
+
+			files, err := os.ReadDir(d)
+			assert.NoError(t, err)
+			assert.Empty(t, files, "directory should be empty after validation failure")
+		})
+	}
+}
+
+func TestMixedValidAndInvalidConfigsValidFirst(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg, set := setupWithRemoteConfig(t, d)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// valid config
+	validConfigPath := filepath.Join("testdata/opamp.d/opamp-remote-config.yaml")
+	validConfigBody, err := os.ReadFile(validConfigPath)
+	assert.NoError(t, err)
+
+	// invalid config
+	invalidConfigPath := filepath.Join("testdata/opamp.d/opamp-invalid-apache-uri-config.yaml")
+	invalidConfigBody, err := os.ReadFile(invalidConfigPath)
+	assert.NoError(t, err)
+
+	o.effectiveConfig = map[string]*protobufs.AgentConfigFile{
+		"01-valid-config.yaml": {
+			Body: validConfigBody,
+		},
+		"02-invalid-config.yaml": {
+			Body: invalidConfigBody,
+		},
+	}
+	err = o.saveEffectiveConfig(d)
+
+	// Should fail due to invalid config
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "query must be 'auto'")
+
+	invalidFilePath := filepath.Join(d, "02-invalid-config.yaml")
+	_, statErr := os.Stat(invalidFilePath)
+	assert.True(t, os.IsNotExist(statErr), "invalid config file should not exist on disk after validation failure")
+}
+
 func TestUpdateAgentIdentity(t *testing.T) {
 	cfg, set := defaultSetup()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
