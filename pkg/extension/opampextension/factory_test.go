@@ -43,6 +43,7 @@ func TestFactory_CreateDefaultConfig(t *testing.T) {
 			}),
 		},
 		AcceptsRemoteConfiguration: true,
+		ReportsHealth:              true, // Default value
 	})
 
 	assert.NoError(t, componenttest.CheckConfigStruct(cfg))
