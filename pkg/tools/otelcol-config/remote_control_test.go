@@ -75,6 +75,7 @@ func TestEnableRemoteControlConfigFilePresent(t *testing.T) {
 func TestEnableRemoteControlConfigFileNotPresent(t *testing.T) {
 	values := &flagValues{
 		EnableRemoteControl: true,
+		SetCollectorName:    "my-collector",
 	}
 	const expData = `exporters:
   nop: {}
