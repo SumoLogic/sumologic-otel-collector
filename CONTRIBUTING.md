@@ -127,7 +127,6 @@ use (
         ./pkg/processor/k8sprocessor
         ./pkg/processor/metricfrequencyprocessor
         ./pkg/processor/sourceprocessor
-        ./pkg/processor/sumologicschemaprocessor
         ./pkg/processor/sumologicsyslogprocessor
         ./pkg/receiver/telegrafreceiver
         ./pkg/configprovider/globprovider
