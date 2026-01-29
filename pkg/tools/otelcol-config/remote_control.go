@@ -50,6 +50,17 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 
 	remoteConfigDir := filepath.Join(confBase, DefaultRemoteConfigurationDirectory)
 
+	sumologicExt := map[string]any{
+		"installation_token":              "${SUMOLOGIC_INSTALLATION_TOKEN}",
+		"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
+		"time_zone":                       "UTC",
+		"clobber":                         false,
+	}
+
+	if ctx.Flags.SetCollectorName != "" {
+		sumologicExt["collector_name"] = ctx.Flags.SetCollectorName
+	}
+
 	var sumoRemoteConfig = map[string]any{
 		"extensions": map[string]any{
 			"file_storage": map[string]any{
@@ -66,13 +77,7 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 				"remote_configuration_directory": remoteConfigDir,
 				"endpoint":                       DefaultSumoLogicOpampEndpoint,
 			},
-			"sumologic": map[string]any{
-				"installation_token":              "${SUMOLOGIC_INSTALLATION_TOKEN}",
-				"collector_credentials_directory": "/var/lib/otelcol-sumo/credentials",
-				"time_zone":                       "UTC",
-				"clobber":                         false,
-				"collector_name":                  "my-collector",
-			},
+			"sumologic": sumologicExt,
 		},
 		"receivers": map[string]any{
 			"nop": map[string]any{},
