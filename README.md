@@ -78,9 +78,9 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |           [flinkmetrics][flinkmetricsreceiver]           |                    [span][spanprocessor]                     |                                        |                                             |                                     |
 |          [fluentforward][fluentforwardreceiver]          |                                                              |                                        |                                             |                                     |
 |      [googlecloudpubsub][googlecloudpubsubreceiver]      |               [sumologic][sumologicprocessor]                |                                        |                                             |                                     |
-|     [googlecloudspanner][googlecloudspannerreceiver]     |   ⚠️~~[`sumologic_schema`][sumologicschemaprocessor]~~ ⚠️    |                                        |                                             |                                     |
-|                [haproxy][haproxyreceiver]                |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                             |                                     |
-|            [hostmetrics][hostmetricsreceiver]            |            [tail_sampling][tailsamplingprocessor]            |                                        |                                             |                                     |
+|     [googlecloudspanner][googlecloudspannerreceiver]     |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                             |                                     |
+|                [haproxy][haproxyreceiver]                |            [tail_sampling][tailsamplingprocessor]            |                                        |                                             |                                     |
+|            [hostmetrics][hostmetricsreceiver]            |                                                              |                                        |                                             |                                     |
 |              [httpcheck][httpcheckreceiver]              |               [transform][transformprocessor]                |                                        |                                             |                                     |
 |                    [iis][iisreceiver]                    |                                                              |                                        |                                             |                                     |
 |               [influxdb][influxdbreceiver]               |                  [unroll][unrollprocessor]                   |                                        |                                             |                                     |
@@ -263,7 +263,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [sourceprocessor]: ./pkg/processor/sourceprocessor
 [spanprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/spanprocessor
 [sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/sumologicprocessor
-[sumologicschemaprocessor]: ./pkg/processor/sumologicschemaprocessor
 [sumologicsyslogprocessor]: ./pkg/processor/sumologicsyslogprocessor
 [tailsamplingprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/tailsamplingprocessor
 [transformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.144.0/processor/transformprocessor
