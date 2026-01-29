@@ -3,18 +3,31 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"gopkg.in/yaml.v3"
 )
 
+// For better performance, compile regex once at package level
+var validNamePattern = regexp.MustCompile(`[^A-Za-z0-9_./=+\-@]`)
+
+func isValidName(name string) bool {
+	return !validNamePattern.MatchString(name)
+}
+
 func SetCollectorNameAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
 	collectorName := ctx.Flags.SetCollectorName
 	collectorName = strings.TrimSpace(collectorName)
+
 	if collectorName == "" {
 		return fmt.Errorf("collector name cannot be empty")
+	}
+	// only Letters, numbers and _. / = + - @ are allowed
+	if !isValidName(collectorName) {
+		return fmt.Errorf("collector name contains invalid characters; only letters, numbers and _. / = + - @ are allowed")
 	}
 
 	if err != nil {
