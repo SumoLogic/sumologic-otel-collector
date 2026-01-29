@@ -20,6 +20,20 @@ func TestSetCollectorNameAction(t *testing.T) {
 		ExpectedErr    bool
 	}{
 		{
+			Name:           "[enabled] invalid name",
+			Flags:          []string{"--set-collector-name", "my-collector?"},
+			Conf:           fstest.MapFS{},
+			ExpectedWriter: []byte("extensions:\n  sumologic:\n    collector_name: my-collector?\n"),
+			ExpectedErr:    true,
+		},
+		{
+			Name:           "[enabled] valid name with special char =",
+			Flags:          []string{"--set-collector-name", "my-collector="},
+			Conf:           fstest.MapFS{},
+			ExpectedWriter: []byte("extensions:\n  sumologic:\n    collector_name: my-collector=\n"),
+			ExpectedErr:    false,
+		},
+		{
 			Name:           "[enabled] no existing setting",
 			Flags:          []string{"--set-collector-name", "my-collector"},
 			Conf:           fstest.MapFS{},
