@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"gopkg.in/yaml.v3"
@@ -10,6 +11,12 @@ import (
 
 func SetCollectorNameAction(ctx *actionContext) error {
 	conf, err := ReadConfigDir(ctx.ConfigDir)
+	collectorName := ctx.Flags.SetCollectorName
+	collectorName = strings.TrimSpace(collectorName)
+	if collectorName == "" {
+		return fmt.Errorf("collector name cannot be empty")
+	}
+
 	if err != nil {
 		return err
 	}
