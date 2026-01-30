@@ -33,6 +33,7 @@ var flagActions = map[string]action{
 	flagOverride:             nullAction,
 	flagEnableClobber:        EnableClobberAction,
 	flagDisableClobber:       DisableClobberAction,
+	flagSetCollectorName:     SetCollectorNameAction,
 }
 
 func nullAction(*actionContext) error {
@@ -62,4 +63,5 @@ var actionOrder = []string{
 	flagReadKV,
 	flagEnableClobber,
 	flagDisableClobber,
+	flagSetCollectorName,
 }
