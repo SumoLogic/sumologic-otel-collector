@@ -17,20 +17,40 @@ func isValidName(name string) bool {
 	return !validNamePattern.MatchString(name)
 }
 
-func SetCollectorNameAction(ctx *actionContext) error {
-	conf, err := ReadConfigDir(ctx.ConfigDir)
-	collectorName := ctx.Flags.SetCollectorName
-	collectorName = strings.TrimSpace(collectorName)
+func validateCollectorName(name string) error {
+	name = strings.TrimSpace(name)
 
-	if collectorName == "" {
+	if name == "" {
 		return fmt.Errorf("collector name cannot be empty")
 	}
-	// only Letters, numbers and _. / = + - @ are allowed
-	if !isValidName(collectorName) {
-		return fmt.Errorf("collector name contains invalid characters; only letters, numbers and _. / = + - @ are allowed")
+
+	// collector name length limit is 115 characters because:
+	// if clobber is not enabled and a collector with the same name exists,
+	// we append a suffix like "-unix_timestamp" to make the name unique.
+	// The maximum length of the random string is 13 characters, plus the hyphen makes it 14.
+	// Therefore, to ensure the final name does not exceed 128 characters,
+	// we limit the base collector name to 114 characters.
+	if len(name) > 114 {
+		return fmt.Errorf("collector name cannot exceed 115 characters")
 	}
 
+	// only Letters, numbers and _. / = + - @ are allowed
+	if !isValidName(name) {
+		return fmt.Errorf("collector name contains invalid characters; only letters, numbers and _. / = + - @ are allowed")
+	}
+	return nil
+}
+
+func SetCollectorNameAction(ctx *actionContext) error {
+	conf, err := ReadConfigDir(ctx.ConfigDir)
+
 	if err != nil {
+		return err
+	}
+
+	collectorName := ctx.Flags.SetCollectorName
+
+	if err := validateCollectorName(collectorName); err != nil {
 		return err
 	}
 
