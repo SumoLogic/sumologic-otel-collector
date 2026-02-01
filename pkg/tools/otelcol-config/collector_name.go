@@ -21,10 +21,10 @@ func validateCollectorName(name string) error {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
-		return fmt.Errorf("collector name cannot be empty")
+		return fmt.Errorf("collector name cannot be empty. either omit the flag to use the default name or provide a valid name")
 	}
 
-	// collector name length limit is 115 characters because:
+	// collector name length limit is 114 characters because:
 	// if clobber is not enabled and a collector with the same name exists,
 	// we append a suffix like "-unix_timestamp" to make the name unique.
 	// The maximum length of the random string is 13 characters, plus the hyphen makes it 14.
