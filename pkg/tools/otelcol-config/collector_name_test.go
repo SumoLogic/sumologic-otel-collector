@@ -3,11 +3,14 @@ package main
 import (
 	"io"
 	"io/fs"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
 
 func TestSetCollectorNameAction(t *testing.T) {
+
+	longName := strings.Repeat("a", 115)
 
 	tests := []struct {
 		Name           string
@@ -60,6 +63,12 @@ func TestSetCollectorNameAction(t *testing.T) {
 			Flags:          []string{"--set-collector-name", "my-collector"},
 			Conf:           fstest.MapFS{},
 			ExpectedWriter: []byte("extensions:\n  sumologic:\n    collector_name: my-collector\n"),
+		},
+		{
+			Name:        "[enabled]  collector name length limit exceeded",
+			Flags:       []string{"--set-collector-name", longName},
+			Conf:        fstest.MapFS{},
+			ExpectedErr: true,
 		},
 	}
 
