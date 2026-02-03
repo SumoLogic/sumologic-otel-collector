@@ -27,6 +27,7 @@ const (
 	flagOverride             = "override"
 	flagEnableClobber        = "enable-clobber"
 	flagDisableClobber       = "disable-clobber"
+	flagSetCollectorName     = "set-collector-name"
 )
 
 const (
@@ -49,6 +50,7 @@ const (
 	setTimezoneUsage          = "sets the time_zone field in the sumologic extension"
 	enableClobberUsage        = "enables clobber (deletes any existing collector with the same name)."
 	disableClobberUsage       = "disables clobber (prevents deletion of existing collectors with the same name)."
+	setCollectorNameUsage     = "sets the collector name in the sumologic extension"
 )
 
 type flagValues struct {
@@ -72,6 +74,7 @@ type flagValues struct {
 	SetAPIURL            string
 	EnableClobber        bool
 	DisableClobber       bool
+	SetCollectorName     string
 }
 
 func newFlagValues() *flagValues {
@@ -102,6 +105,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.StringVar(&fv.SetAPIURL, flagSetAPIURL, "", setAPIURLUsage)
 	flags.BoolVar(&fv.EnableClobber, flagEnableClobber, false, enableClobberUsage)
 	flags.BoolVar(&fv.DisableClobber, flagDisableClobber, false, disableClobberUsage)
+	flags.StringVarP(&fv.SetCollectorName, flagSetCollectorName, "N", "", setCollectorNameUsage)
 
 	return flags
 }

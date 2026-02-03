@@ -203,3 +203,14 @@ func TestConfigDirUnset(t *testing.T) {
 		t.Errorf("bad flag values: got %v, want %v", got, want)
 	}
 }
+
+func TestSetCollectorName(t *testing.T) {
+	fv := newFlagValues()
+	fs := makeFlagSet(fv)
+	if err := fs.Parse([]string{"otelcol-config", "--set-collector-name", "my-collector"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := fv.SetCollectorName, "my-collector"; !cmp.Equal(got, want) {
+		t.Errorf("bad flag values: got %v, want %v", got, want)
+	}
+}

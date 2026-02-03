@@ -75,6 +75,7 @@ func TestEnableRemoteControlConfigFilePresent(t *testing.T) {
 func TestEnableRemoteControlConfigFileNotPresent(t *testing.T) {
 	values := &flagValues{
 		EnableRemoteControl: true,
+		SetCollectorName:    "my-collector",
 	}
 	const expData = `exporters:
   nop: {}
@@ -92,6 +93,7 @@ extensions:
   sumologic:
     clobber: false
     collector_credentials_directory: /var/lib/otelcol-sumo/credentials
+    collector_name: my-collector
     installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
     time_zone: UTC
 receivers:
