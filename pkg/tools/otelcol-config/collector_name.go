@@ -31,7 +31,7 @@ func validateCollectorName(name string) error {
 	// Therefore, to ensure the final name does not exceed 128 characters,
 	// we limit the base collector name to 114 characters.
 	if len(name) > 114 {
-		return fmt.Errorf("collector name cannot exceed 115 characters")
+		return fmt.Errorf("collector name cannot exceed 114 characters")
 	}
 
 	// only Letters, numbers and _. / = + - @ are allowed
