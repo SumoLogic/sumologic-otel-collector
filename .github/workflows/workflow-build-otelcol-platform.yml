@@ -176,7 +176,7 @@ jobs:
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
-          
+
           # Set CGO_CFLAGS based on architecture
           case "${{ inputs.platform }}" in
             *arm64*)
@@ -190,7 +190,10 @@ jobs:
               EXTRA_LD="-linkmode external -extldflags '-static'"
               ;;
           esac
-          
+
+          echo "CGO_CFLAGS=$CGO_CFLAGS"
+          echo "CGO_LDFLAGS=$CGO_LDFLAGS"
+          echo "EXTRA_LDFLAGS=$EXTRA_LD"
           make otelcol-sumo-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
