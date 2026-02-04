@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componentstatus"
@@ -82,7 +83,12 @@ type opampAgent struct {
 	startTimeUnixNano    uint64
 	lifetimeCtx          context.Context
 	lifetimeCancel       context.CancelFunc
-	readyCh              chan struct{}
+	
+	// Health batching fields
+	healthMutex           sync.Mutex
+	pendingHealth         *protobufs.ComponentHealth
+	lastHealthSent        time.Time
+	healthBatchInterval   time.Duration
 }
 
 // statusAggregator is an interface for tracking component status
@@ -112,6 +118,7 @@ func (o opampLogShim) Errorf(_ context.Context, fmt string, v ...interface{}) {
 
 func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
+	
 	o.opampClient = client.NewWebSocket(opampLogShim{o.logger.Sugar()})
 
 	if err := o.loadEffectiveConfig(o.cfg.RemoteConfigurationDirectory); err != nil {
@@ -126,7 +133,6 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 
-	// Initialize health reporting
 	o.initHealthReporting()
 
 	if err := o.getAuthExtension(); err != nil {
@@ -177,19 +183,6 @@ func (o *opampAgent) ComponentStatusChanged(
 		}
 	}()
 	o.componentStatusCh <- &eventSourcePair{source: source, event: event}
-}
-
-// Ready is called when the collector pipeline is ready
-func (o *opampAgent) Ready() error {
-	close(o.readyCh)
-	return nil
-}
-
-// NotReady is called when the collector pipeline is not ready
-func (o *opampAgent) NotReady() error {
-	// Recreate the channel if it was already closed
-	o.readyCh = make(chan struct{})
-	return nil
 }
 
 func (o *opampAgent) Shutdown(ctx context.Context) error {
@@ -269,7 +262,7 @@ func (o *opampAgent) startClient(ctx context.Context) error {
 		return err
 	}
 
-	o.logger.Debug("OpAMP client started")
+	o.logger.Debug("OpAMP client started successfully")
 
 	if o.authExtension != nil {
 		if err := o.watchCredentials(ctx, o.Reload); err != nil {
@@ -375,9 +368,10 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		instanceId:           uid,
 		statusSubscriptionWg: &sync.WaitGroup{},
 		componentHealthWg:    &sync.WaitGroup{},
+		componentStatusCh:    make(chan *eventSourcePair, 100),
 		lifetimeCtx:          lifetimeCtx,
 		lifetimeCancel:       lifetimeCancel,
-		readyCh:              make(chan struct{}),
+		healthBatchInterval:  10 * time.Second,
 	}
 
 	return agent, nil
@@ -688,6 +682,7 @@ func (o *opampAgent) initHealthReporting() {
 	}
 
 	// Set initial health to false (unhealthy) until we receive status updates
+	// because with default nil health, the OpAMP client cannot connect with server
 	o.setHealth(&protobufs.ComponentHealth{Healthy: false})
 
 	// Create status aggregator if not already created
@@ -700,10 +695,13 @@ func (o *opampAgent) initHealthReporting() {
 	o.statusSubscriptionWg.Add(1)
 	go o.statusAggregatorEventLoop(unsubscribeFunc, statusChan)
 
-	// Create component status channel and start event loop
-	o.componentStatusCh = make(chan *eventSourcePair)
+	// Start component health event loop
 	o.componentHealthWg.Add(1)
 	go o.componentHealthEventLoop()
+	
+	// Start health batching ticker
+	o.componentHealthWg.Add(1)
+	go o.healthBatchingLoop()
 }
 
 // statusAggregatorEventLoop processes status updates from the aggregator
@@ -727,43 +725,17 @@ func (o *opampAgent) statusAggregatorEventLoop(unsubscribeFunc status.Unsubscrib
 			}
 
 			componentHealth := convertComponentHealth(statusUpdate)
+			
 			o.setHealth(componentHealth)
 		}
 	}
 }
 
 // componentHealthEventLoop processes component status change events
+// With health batching, we can immediately forward all events to the aggregator
 func (o *opampAgent) componentHealthEventLoop() {
-	var eventQueue []*eventSourcePair
-
 	defer o.componentHealthWg.Done()
 
-	// Queue events until the pipeline is ready
-	for loop := true; loop; {
-		select {
-		case esp, ok := <-o.componentStatusCh:
-			if !ok {
-				return
-			}
-			// If the component is starting, process immediately
-			if esp.event.Status() != componentstatus.StatusStarting {
-				eventQueue = append(eventQueue, esp)
-				continue
-			}
-			o.statusAggregator.RecordStatus(esp.source, esp.event)
-		case <-o.readyCh:
-			// Process all queued events
-			for _, esp := range eventQueue {
-				o.statusAggregator.RecordStatus(esp.source, esp.event)
-			}
-			eventQueue = nil
-			loop = false
-		case <-o.lifetimeCtx.Done():
-			return
-		}
-	}
-
-	// After pipeline is ready, process events as they come
 	for {
 		select {
 		case esp, ok := <-o.componentStatusCh:
@@ -777,7 +749,8 @@ func (o *opampAgent) componentHealthEventLoop() {
 	}
 }
 
-// setHealth reports health status to the OpAMP server
+// setHealth queues health status to be sent to the OpAMP server (batched every 10s)
+// The first health update is sent immediately, subsequent updates are batched.
 func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 	if !o.cfg.ReportsHealth || o.opampClient == nil {
 		return
@@ -791,8 +764,79 @@ func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 		ch.StartTimeUnixNano = o.startTimeUnixNano
 	}
 
-	if err := o.opampClient.SetHealth(ch); err != nil {
-		o.logger.Error("Could not report health to OpAMP server", zap.Error(err))
+	// Send first health update immediately to establish connection
+	// Subsequent updates are batched every 10 seconds
+	o.healthMutex.Lock()
+	isFirstHealth := o.lastHealthSent.IsZero()
+	o.pendingHealth = ch
+	o.healthMutex.Unlock()
+	
+	if isFirstHealth {
+		// Send immediately for first health update
+		if err := o.opampClient.SetHealth(ch); err != nil {
+			o.logger.Error("Could not report initial health to OpAMP server", zap.Error(err))
+		} else {
+			o.logger.Info("📤 Sent initial health to OpAMP server immediately",
+				zap.Bool("healthy", ch.Healthy),
+				zap.String("status", ch.Status),
+			)
+			o.healthMutex.Lock()
+			o.lastHealthSent = time.Now()
+			o.pendingHealth = nil // Clear since we just sent it
+			o.healthMutex.Unlock()
+		}
+	} else {
+		o.logger.Debug("📝 Health update queued (will be sent in batch)",
+			zap.Bool("healthy", ch.Healthy),
+			zap.String("status", ch.Status),
+		)
+	}
+}
+
+// healthBatchingLoop sends batched health updates periodically
+func (o *opampAgent) healthBatchingLoop() {
+	defer o.componentHealthWg.Done()
+	
+	ticker := time.NewTicker(o.healthBatchInterval)
+	defer ticker.Stop()
+	
+	for {
+		select {
+		case <-ticker.C:
+			// Send any pending health update
+			o.healthMutex.Lock()
+			if o.pendingHealth != nil {
+				healthToSend := o.pendingHealth
+				o.pendingHealth = nil
+				o.healthMutex.Unlock()
+				
+				if err := o.opampClient.SetHealth(healthToSend); err != nil {
+					o.logger.Error("Could not report health to OpAMP server", zap.Error(err))
+				} else {
+					o.logger.Info("📤 Sent batched health to OpAMP server",
+						zap.Bool("healthy", healthToSend.Healthy),
+						zap.String("status", healthToSend.Status),
+						zap.Uint64("status_time_unix_nano", healthToSend.StatusTimeUnixNano),
+						zap.Uint64("start_time_unix_nano", healthToSend.StartTimeUnixNano),
+						zap.Int("nested_component_count", len(healthToSend.ComponentHealthMap)),
+						zap.String("last_error", healthToSend.LastError),
+					)
+					o.lastHealthSent = time.Now()
+				}
+			} else {
+				o.healthMutex.Unlock()
+			}
+			
+		case <-o.lifetimeCtx.Done():
+			// Send final health update before shutting down
+			o.healthMutex.Lock()
+			if o.pendingHealth != nil {
+				_ = o.opampClient.SetHealth(o.pendingHealth)
+				o.logger.Info("📤 Sent final health update before shutdown")
+			}
+			o.healthMutex.Unlock()
+			return
+		}
 	}
 }
 
