@@ -180,7 +180,7 @@ jobs:
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+            EXTRA_LDFLAGS="-linkmode external -extldflags '-static -Wl,--no-relax'"
 
       # FIPS Build for non-Linux platforms
       - name: Build (FIPS)
