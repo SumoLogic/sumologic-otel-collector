@@ -273,7 +273,7 @@ otelcol-sumo-windows_amd64:
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
 	CGO_CFLAGS="-O2 -g -mlong-calls" \
-	CGO_LDFLAGS="-O2 -g" \
+	CGO_LDFLAGS="-O2 -g -Wl,--no-relax" \
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \

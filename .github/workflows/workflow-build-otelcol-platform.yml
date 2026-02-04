@@ -178,15 +178,18 @@ jobs:
           echo "Using toolchain: $CC"
           
           # Set CGO_CFLAGS based on architecture
-          if [[ "${{ inputs.platform }}" == *"arm64"* ]]; then
-            export CGO_CFLAGS="-O2 -g -mlong-calls"
-            export CGO_LDFLAGS="-O2 -g"
-            EXTRA_LD="-linkmode external -extldflags '-static -Wl,--no-relax'"
-          else
-            export CGO_CFLAGS="-O2 -g"
-            export CGO_LDFLAGS="-O2 -g"
-            EXTRA_LD="-linkmode external -extldflags '-static'"
-          fi
+          case "${{ inputs.platform }}" in
+            *arm64*)
+              export CGO_CFLAGS="-O2 -g -mlong-calls"
+              export CGO_LDFLAGS="-O2 -g -Wl,--no-relax"
+              EXTRA_LD="-linkmode external -extldflags '-static -Wl,--no-relax'"
+              ;;
+            *)
+              export CGO_CFLAGS="-O2 -g"
+              export CGO_LDFLAGS="-O2 -g"
+              EXTRA_LD="-linkmode external -extldflags '-static'"
+              ;;
+          esac
           
           make otelcol-sumo-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
