@@ -180,9 +180,9 @@ jobs:
           # Set CGO_CFLAGS based on architecture
           case "${{ inputs.platform }}" in
             *arm64*)
-              export CGO_CFLAGS="-O2 -g -mlong-calls"
-              export CGO_LDFLAGS="-O2 -g -Wl,--no-relax"
-              EXTRA_LD="-linkmode external -extldflags '-static -Wl,--no-relax'"
+              export CGO_CFLAGS="-O2 -g -mlong-calls -ffunction-sections -fdata-sections"
+              export CGO_LDFLAGS="-O2 -g -Wl,--no-relax -Wl,--gc-sections"
+              EXTRA_LD="-linkmode external -extldflags '-static -Wl,--no-relax -Wl,--gc-sections'"
               ;;
             *)
               export CGO_CFLAGS="-O2 -g"
