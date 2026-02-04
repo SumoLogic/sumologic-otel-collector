@@ -16,5 +16,5 @@ jobs:
           LOG_LEVEL: debug
           RENOVATE_REPOSITORIES: SumoLogic/sumologic-otel-collector
         with:
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           configurationFile: renovate.json5
