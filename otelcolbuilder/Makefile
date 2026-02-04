@@ -179,12 +179,12 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" GOEXPERIMENT=$(GOEXPERIMENT) go build -v -x \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
 		-o ./$(BINARY_NAME)$(BINARY_EXT) . \
-	) 2>&1 | tee build.log
+	)
 	chmod +x ./cmd/$(BINARY_NAME)$(BINARY_EXT)
 
 .PHONY: _gobuild_debug
@@ -272,13 +272,11 @@ otelcol-sumo-windows_amd64:
 
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
-	CGO_CFLAGS="-O2 -g -mlong-calls -ffunction-sections -fdata-sections" \
-	CGO_LDFLAGS="-O2 -g -Wl,--no-relax -Wl,--gc-sections" \
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \
 		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
-		EXTRA_LDFLAGS="-linkmode external -extldflags '-static -Wl,--no-relax -Wl,--gc-sections'"
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
