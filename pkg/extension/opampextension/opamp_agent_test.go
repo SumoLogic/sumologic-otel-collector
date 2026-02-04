@@ -530,7 +530,7 @@ func TestHealthReportingInitialization(t *testing.T) {
 	// Verify health batching fields are initialized
 	assert.Nil(t, o.pendingHealth)
 	assert.True(t, o.lastHealthSent.IsZero())
-	assert.Equal(t, 10*time.Second, o.healthBatchInterval)
+	assert.Equal(t, 30*time.Second, o.healthBatchInterval)
 }
 
 func TestHealthReportingDisabled(t *testing.T) {

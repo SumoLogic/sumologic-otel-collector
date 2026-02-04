@@ -371,7 +371,7 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		componentStatusCh:    make(chan *eventSourcePair, 100),
 		lifetimeCtx:          lifetimeCtx,
 		lifetimeCancel:       lifetimeCancel,
-		healthBatchInterval:  10 * time.Second,
+		healthBatchInterval:  30 * time.Second,
 	}
 
 	return agent, nil
