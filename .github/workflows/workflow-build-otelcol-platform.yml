@@ -176,13 +176,23 @@ jobs:
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
-          export CGO_CFLAGS="-O2 -g -mlong-calls"
-          export CGO_LDFLAGS="-O2 -g"
+          
+          # Set CGO_CFLAGS based on architecture
+          if [[ "${{ inputs.platform }}" == *"arm64"* ]]; then
+            export CGO_CFLAGS="-O2 -g -mlong-calls"
+            export CGO_LDFLAGS="-O2 -g"
+            EXTRA_LD="-linkmode external -extldflags '-static -Wl,--no-relax'"
+          else
+            export CGO_CFLAGS="-O2 -g"
+            export CGO_LDFLAGS="-O2 -g"
+            EXTRA_LD="-linkmode external -extldflags '-static'"
+          fi
+          
           make otelcol-sumo-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static -Wl,--no-relax'"
+            EXTRA_LDFLAGS="$EXTRA_LD"
 
       # FIPS Build for non-Linux platforms
       - name: Build (FIPS)
