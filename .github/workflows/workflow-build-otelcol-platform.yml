@@ -176,6 +176,8 @@ jobs:
           CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
           test "$CC"
           echo "Using toolchain: $CC"
+          export CGO_CFLAGS="-O2 -g -mlong-calls"
+          export CGO_LDFLAGS="-O2 -g"
           make otelcol-sumo-${{ inputs.platform }} \
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
