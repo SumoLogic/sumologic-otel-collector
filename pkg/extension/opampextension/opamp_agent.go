@@ -682,8 +682,9 @@ func (o *opampAgent) initHealthReporting() {
 		return
 	}
 
-	// Set initial health to false (unhealthy) until we receive status updates
-	// because with default nil health, the OpAMP client cannot connect with server
+	// Set initial health to false (unhealthy) until we receive status updates.
+	// This explicitly avoids using a nil initial health value, which can cause
+	// interoperability issues with some OpAMP server implementations.
 	o.setHealth(&protobufs.ComponentHealth{Healthy: false})
 
 	// Create status aggregator if not already created
