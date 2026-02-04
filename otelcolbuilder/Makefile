@@ -179,7 +179,7 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \

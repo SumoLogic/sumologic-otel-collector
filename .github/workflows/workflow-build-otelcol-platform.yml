@@ -198,6 +198,8 @@ jobs:
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
+            CGO_CFLAGS="$CGO_CFLAGS" \
+            CGO_LDFLAGS="$CGO_LDFLAGS" \
             EXTRA_LDFLAGS="$EXTRA_LD"
 
       # FIPS Build for non-Linux platforms
