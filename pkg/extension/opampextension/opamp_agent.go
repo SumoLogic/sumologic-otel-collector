@@ -83,7 +83,7 @@ type opampAgent struct {
 	startTimeUnixNano    uint64
 	lifetimeCtx          context.Context
 	lifetimeCancel       context.CancelFunc
-	
+
 	// Health batching fields
 	healthMutex           sync.Mutex
 	pendingHealth         *protobufs.ComponentHealth
@@ -118,7 +118,7 @@ func (o opampLogShim) Errorf(_ context.Context, fmt string, v ...interface{}) {
 
 func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 	o.host = host
-	
+
 	o.opampClient = client.NewWebSocket(opampLogShim{o.logger.Sugar()})
 
 	if err := o.loadEffectiveConfig(o.cfg.RemoteConfigurationDirectory); err != nil {
@@ -698,7 +698,7 @@ func (o *opampAgent) initHealthReporting() {
 	// Start component health event loop
 	o.componentHealthWg.Add(1)
 	go o.componentHealthEventLoop()
-	
+
 	// Start health batching ticker
 	o.componentHealthWg.Add(1)
 	go o.healthBatchingLoop()
@@ -725,7 +725,7 @@ func (o *opampAgent) statusAggregatorEventLoop(unsubscribeFunc status.Unsubscrib
 			}
 
 			componentHealth := convertComponentHealth(statusUpdate)
-			
+
 			o.setHealth(componentHealth)
 		}
 	}
@@ -770,7 +770,7 @@ func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 	isFirstHealth := o.lastHealthSent.IsZero()
 	o.pendingHealth = ch
 	o.healthMutex.Unlock()
-	
+
 	if isFirstHealth {
 		// Send immediately for first health update
 		if err := o.opampClient.SetHealth(ch); err != nil {
@@ -796,10 +796,10 @@ func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 // healthBatchingLoop sends batched health updates periodically
 func (o *opampAgent) healthBatchingLoop() {
 	defer o.componentHealthWg.Done()
-	
+
 	ticker := time.NewTicker(o.healthBatchInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -809,7 +809,7 @@ func (o *opampAgent) healthBatchingLoop() {
 				healthToSend := o.pendingHealth
 				o.pendingHealth = nil
 				o.healthMutex.Unlock()
-				
+
 				if err := o.opampClient.SetHealth(healthToSend); err != nil {
 					o.logger.Error("Could not report health to OpAMP server", zap.Error(err))
 				} else {
@@ -826,7 +826,7 @@ func (o *opampAgent) healthBatchingLoop() {
 			} else {
 				o.healthMutex.Unlock()
 			}
-			
+
 		case <-o.lifetimeCtx.Done():
 			// Send final health update before shutting down
 			o.healthMutex.Lock()

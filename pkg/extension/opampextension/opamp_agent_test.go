@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -521,7 +522,29 @@ func TestHealthReportingInitialization(t *testing.T) {
 	// Verify health reporting fields are initialized
 	assert.NotNil(t, o.statusSubscriptionWg)
 	assert.NotNil(t, o.componentHealthWg)
+	assert.NotNil(t, o.componentStatusCh)
 	assert.NotNil(t, o.lifetimeCtx)
 	assert.NotNil(t, o.lifetimeCancel)
-	assert.NotNil(t, o.readyCh)
+	assert.Equal(t, uint64(0), o.startTimeUnixNano)
+
+	// Verify health batching fields are initialized
+	assert.Nil(t, o.pendingHealth)
+	assert.True(t, o.lastHealthSent.IsZero())
+	assert.Equal(t, 10*time.Second, o.healthBatchInterval)
+}
+
+func TestHealthReportingDisabled(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ReportsHealth = false
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// Health reporting fields should still be initialized
+	assert.NotNil(t, o.statusSubscriptionWg)
+	assert.NotNil(t, o.componentHealthWg)
+	assert.NotNil(t, o.lifetimeCtx)
+
+	// Verify capability does not include health reporting
+	capabilities := o.getAgentCapabilities()
+	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth == 0)
 }
