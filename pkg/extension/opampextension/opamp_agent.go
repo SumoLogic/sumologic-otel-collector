@@ -835,7 +835,7 @@ func (o *opampAgent) healthBatchingLoop() {
 				_ = o.opampClient.SetHealth(o.pendingHealth)
 				o.logger.Info("📤 Sent final health update before shutdown")
 			}
-			o.lastHealthSent = time.Time{} // Reset for potential restart
+			o.lastHealthSent = time.Time{} // Reset internal health tracking on shutdown
 			o.healthMutex.Unlock()
 			return
 		}
