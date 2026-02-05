@@ -179,7 +179,7 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) CGO_CFLAGS="$(CGO_CFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
@@ -275,10 +275,8 @@ otelcol-sumo-linux-fips_arm64:
 	$(MAKE) otelcol-sumo-linux_arm64 \
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \
-		CGO_CFLAGS="-Os" \
-		CGO_LDFLAGS="-Os" \
 		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
-		EXTRA_LDFLAGS="-linkmode external -extldflags '-static -s -w'"
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
