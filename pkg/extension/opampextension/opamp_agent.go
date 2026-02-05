@@ -751,7 +751,7 @@ func (o *opampAgent) componentHealthEventLoop() {
 	}
 }
 
-// setHealth queues health status to be sent to the OpAMP server (batched every 10s)
+// setHealth queues health status to be sent to the OpAMP server (batched every 30s)
 // The first health update is sent immediately, subsequent updates are batched.
 func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 	if !o.cfg.ReportsHealth || o.opampClient == nil {
@@ -767,7 +767,7 @@ func (o *opampAgent) setHealth(ch *protobufs.ComponentHealth) {
 	}
 
 	// Send first health update immediately to establish connection
-	// Subsequent updates are batched every 10 seconds
+	// Subsequent updates are batched every 30 seconds
 	o.healthMutex.Lock()
 	isFirstHealth := o.lastHealthSent.IsZero()
 	o.pendingHealth = ch
