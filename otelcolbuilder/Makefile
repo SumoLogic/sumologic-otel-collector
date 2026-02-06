@@ -110,8 +110,10 @@ endif
 # Add -mlong-calls for aarch64 Linux builds to handle large code models
 ifeq ($(shell go env GOOS),linux)
 ifeq ($(shell go env GOARCH),arm64)
-	export CGO_CFLAGS += -mlong-calls
-	export CGO_LDFLAGS += -mlong-calls
+	CGO_CFLAGS := $(CGO_CFLAGS) -mlong-calls
+	CGO_LDFLAGS := $(CGO_LDFLAGS) -mlong-calls
+	export CGO_CFLAGS
+	export CGO_LDFLAGS
 endif
 endif
 
