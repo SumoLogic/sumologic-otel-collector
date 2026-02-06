@@ -107,14 +107,6 @@ else
 	endif
 endif
 
-# Add -mlong-calls for aarch64 Linux builds to handle large code models
-ifeq ($(shell go env GOOS),linux)
-ifeq ($(shell go env GOARCH),arm64)
-	CGO_CFLAGS := $(CGO_CFLAGS) -mlong-calls
-	export CGO_CFLAGS
-endif
-endif
-
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
