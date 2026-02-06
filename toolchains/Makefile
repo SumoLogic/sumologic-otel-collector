@@ -28,7 +28,10 @@ musl-cross-make:
 .PHONY: toolchain-linux_arm64
 toolchain-linux_arm64: OUTPUT=$(TOOLCHAINS_DIR)/toolchain_arm64
 toolchain-linux_arm64: musl-cross-make
-	TARGET=aarch64-linux-musl $(MAKE) -C musl-cross-make install
+# Use -mlong-calls for aarch64 to handle large binaries (avoids R_AARCH64_CALL26 relocation errors)
+	TARGET=aarch64-linux-musl \
+		COMMON_CONFIG='CFLAGS="-g0 -Os -mlong-calls" CXXFLAGS="-g0 -Os" LDFLAGS="-s"' \
+		$(MAKE) -C musl-cross-make install
 
 .PHONY: toolchain-linux_amd64
 toolchain-linux_amd64: OUTPUT=$(TOOLCHAINS_DIR)/toolchain_amd64
