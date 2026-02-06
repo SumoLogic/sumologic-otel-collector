@@ -111,9 +111,7 @@ endif
 ifeq ($(shell go env GOOS),linux)
 ifeq ($(shell go env GOARCH),arm64)
 	CGO_CFLAGS := $(CGO_CFLAGS) -mlong-calls
-	CGO_LDFLAGS := $(CGO_LDFLAGS) -mlong-calls
 	export CGO_CFLAGS
-	export CGO_LDFLAGS
 endif
 endif
 
