@@ -179,8 +179,8 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) CGO_CFLAGS="-mcmodel=large" \
-		CGO_LDFLAGS="-mcmodel=large" go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) CC=/opt/toolchain/bin/aarch64-linux-musl-gcc CGO_CFLAGS="-mcmodel=large" \
+		CGO_LDFLAGS="-mcmodel=large -fuse-ld=lld" go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
