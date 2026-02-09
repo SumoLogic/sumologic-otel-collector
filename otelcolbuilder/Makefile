@@ -176,11 +176,11 @@ _ocb_build:
 		--config .otelcol-builder.yaml \
 		--skip-compilation=$(SKIP_COMPILATION)
 
+# CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v -x \
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
 		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) CC=/opt/toolchain/bin/aarch64-linux-musl-gcc CGO_CFLAGS="-mcmodel=large" CGO_LDFLAGS="-mcmodel=large -fuse-ld=lld" go build -v -x\
-#		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v -x \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
