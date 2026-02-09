@@ -103,7 +103,7 @@ else
 		LDFLAGS+= -w
 	else
 		GOEXPERIMENT=boringcrypto
-		LDFLAGS+= -w
+		LDFLAGS+= -s -w
 	endif
 endif
 
