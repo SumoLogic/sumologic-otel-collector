@@ -12,7 +12,8 @@ It manages:
 - authentication (using `sumologicextension` to retreive credentials)
 - registration (sends an initial OpAMP agent-to-server message)
 - reporting (responds to OpAMP server requests with an agent status, e.g. the
-  collector's effective configuration)
+  collector's effective configuration and health status)
+- health monitoring (tracks and reports component health status to the OpAMP server)
 - local configuration (writes to a local OpenTelemetry YAML configuration file
   for a provider (i.e. glob) to read)
 - collector configuration reloads (SIGHUP reloads on local configuration changes)
@@ -34,6 +35,9 @@ It manages:
 - `disable_tag_replacement`: (optional) Boolean flag to disable new config merge
 to disable tag replacement which replaces tags instead of appending to them for remotely managed collectors
   feature for remotely managed collectors. Default value - false
+- `reports_health`: (optional) Boolean flag to enable/disable health reporting.
+  When enabled, the agent tracks component health status and reports it to the
+  OpAMP server. Default value - true
 
 ## Example Config
 
@@ -45,6 +49,7 @@ extensions:
   opamp:
     endpoint: <wss_endpoint_url>
     remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+    reports_health: true  # Optional: enable health reporting (default: true)
 ```
 
 ## API URLs
