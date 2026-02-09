@@ -90,6 +90,8 @@ else
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
 	CGO_ENABLED ?= 0
 endif
+CGO_CFLAGS=
+CGO_LDFLAGS=
 # CGO_ENABLED ?= 1
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),)
@@ -104,10 +106,11 @@ else
 	else
 		GOEXPERIMENT=boringcrypto
 		LDFLAGS+= -w
+		CGO_CFLAGS=-mlong-calls
+		GO_LDFLAGS=-mlong-calls
 	endif
 endif
-CGO_CFLAGS=
-CGO_LDFLAGS=
+
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
