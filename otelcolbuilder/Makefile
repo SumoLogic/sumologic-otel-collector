@@ -277,7 +277,8 @@ otelcol-sumo-linux-fips_arm64:
 		FIPS_SUFFIX=-fips \
 		CGO_ENABLED=1 \
 		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
-		EXTRA_LDFLAGS="-linkmode external -w -extldflags '-static -Wl,--copy-dt-needed-entries -Wl,-z,stack-size=1048576'"
+		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+#		EXTRA_LDFLAGS="-linkmode external -w -extldflags '-static -Wl,--copy-dt-needed-entries -Wl,-z,stack-size=1048576'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
