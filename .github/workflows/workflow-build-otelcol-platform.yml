@@ -181,7 +181,7 @@ jobs:
             CGO_ENABLED="1" \
             CC="$CC" \
             EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-            
+
       # FIPS Build for non-Linux platforms
       - name: Build (FIPS)
         if: inputs.fips && steps.platform.outputs.os != 'linux'

@@ -36,7 +36,7 @@ include $(toolchains_dir)/Makefile
 ################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-OCB_VERSION ?= 0.142.0
+OCB_VERSION ?= 0.145.0
 FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -103,7 +103,7 @@ else
 		LDFLAGS+= -w
 	else
 		GOEXPERIMENT=boringcrypto
-		LDFLAGS+= -s -w
+		LDFLAGS+= -w
 	endif
 endif
 
@@ -176,11 +176,10 @@ _ocb_build:
 		--config .otelcol-builder.yaml \
 		--skip-compilation=$(SKIP_COMPILATION)
 
-# CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v -x \
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) CC=/opt/toolchain/bin/aarch64-linux-musl-gcc CGO_CFLAGS="-mcmodel=large" CGO_LDFLAGS="-mcmodel=large -fuse-ld=lld" go build -v -x\
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
@@ -278,7 +277,6 @@ otelcol-sumo-linux-fips_arm64:
 		CGO_ENABLED=1 \
 		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
 		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-#		EXTRA_LDFLAGS="-linkmode external -w -extldflags '-static -Wl,--copy-dt-needed-entries -Wl,-z,stack-size=1048576'"
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
