@@ -6,7 +6,7 @@ DOCKER_CROSS_BUILDER_NAME=golang-cross-builder
 DOCKER_CROSS_BUILDER_VOLUME=golang-cross-builder
 
 MUSL_X_MAKE_REPO=https://github.com/richfelker/musl-cross-make.git
-MUSL_X_MAKE_REF=fe915821b652a7fa37b34a596f47d8e20bc72338
+MUSL_X_MAKE_REF=2688cf868f1cdfff36ac70ac01f95b55e3bf508f
 
 .PHONY: print-toolchains-dir
 print-toolchains-dir:
