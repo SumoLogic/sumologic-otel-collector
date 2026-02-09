@@ -106,6 +106,8 @@ else
 		LDFLAGS+= -w
 	endif
 endif
+CGO_CFLAGS=
+CGO_LDFLAGS=
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
@@ -179,7 +181,7 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS)CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
