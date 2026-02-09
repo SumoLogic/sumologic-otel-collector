@@ -36,7 +36,7 @@ include $(toolchains_dir)/Makefile
 ################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-OCB_VERSION ?= 0.142.0
+OCB_VERSION ?= 0.145.0
 FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go
@@ -94,7 +94,7 @@ endif
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),)
 	GOEXPERIMENT=
-	LDFLAGS+= -s -w
+# 	LDFLAGS+= -s -w
 else
 # We want to use boringcrypto for fips setup
 	ifeq ($(shell go env GOOS),windows)
