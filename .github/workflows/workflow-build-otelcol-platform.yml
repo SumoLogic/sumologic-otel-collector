@@ -180,7 +180,7 @@ jobs:
             FIPS_SUFFIX="-fips" \
             CGO_ENABLED="1" \
             CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static -mcmodel=large -Wl,-z,stack-size=1048576'"
+            EXTRA_LDFLAGS="-linkmode external -w -extldflags '-static -Wl,--copy-dt-needed-entries -Wl,-z,stack-size=1048576'"
 
       # FIPS Build for non-Linux platforms
       - name: Build (FIPS)
