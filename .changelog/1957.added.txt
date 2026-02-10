@@ -1,1 +1,0 @@
-feat: add --set-collector-name flag in otelcol-config to overwrite default collector name during installation

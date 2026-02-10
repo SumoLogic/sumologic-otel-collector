@@ -1,1 +1,0 @@
-chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.144.0 to v0.145.0
