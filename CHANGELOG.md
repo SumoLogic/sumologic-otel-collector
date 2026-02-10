@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.145.0-sumo-0]
+
+### Released 2026-02-10
+
+### Breaking Changes
+
+- Remove deprecated sumologic_schema processor [#1954]
+
+### Added
+
+- feat(opampextension): add health reporting capability to track and report component health status [#1952]
+- feat: add --set-collector-name flag in otelcol-config to overwrite default collector name during installation [#1957]
+
+### Changed
+
+- chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.144.0 to v0.145.0 [#1960]
+
+[#1954]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1954
+[#1952]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1952
+[#1957]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1957
+[#1960]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1960
+
+[v0.145.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.145.0-sumo-0
+
 ## [v0.144.0-sumo-0]
 
 ### Released 2026-01-27
@@ -21,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [#1948]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1948
 [#1947]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1947
-
 [v0.144.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.144.0-sumo-0
 
 ## [v0.143.0-sumo-0]

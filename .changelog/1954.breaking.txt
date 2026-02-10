@@ -1,1 +1,0 @@
-Remove deprecated sumologic_schema processor
