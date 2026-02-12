@@ -124,7 +124,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           owner: SumoLogic
           repo: sumologic-otel-collector
           draft: true
