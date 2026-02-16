@@ -1,0 +1,1 @@
+fix(ci): updating go version to 1.26.0
