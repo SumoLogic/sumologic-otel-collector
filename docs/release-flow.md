@@ -29,7 +29,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 1. Run Renovate bot ([renovate-scheduler.yml](../.github/workflows/renovate-scheduler.yml))
 2. Wait for PR: `chore(deps): bump opentelemetry-collector`
 
-**Sample PR**: [#1944](../../pull/1944)
+**Sample PR**: [#1944][pr_1944]
 
 ### Step 2: Merge Dependency PR
 
@@ -67,11 +67,11 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
    git push origin prepare-release-0.144.0-sumo-0
    ```
 
-**Sample PR**: [#1965](../../pull/1965)
+**Sample PR**: [#1965][pr_1965]
 
 ### Step 4: Find Build Number
 
-1. Go to [Dev Builds](../../actions/workflows/dev_builds.yml)
+1. Go to [Dev Builds](../.github/workflows/dev_builds.yml)
 2. Open the workflow run and check the **"Trigger Remote Workflow"** step
 3. Get the workflow ID from this step (e.g., `11672946742`)
 
@@ -130,12 +130,12 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 **The orchestrator only creates draft releases. You must publish them manually in this exact order:**
 
-1. **FIRST**: Publish [Collector Release](../../releases)
+1. **FIRST**: Publish [Collector Release][collector_releases]
    - Edit draft release
    - Add upstream OTel core and contrib versions
    - Copy changelog from [CHANGELOG.md](../CHANGELOG.md)
    - Publish release
-   - Wait for [post-release workflow](../../actions/workflows/post-release.yml) to complete (creates package tags)
+   - Wait for [post-release workflow](../.github/workflows/post-release.yml) to complete (creates package tags)
 
 2. **SECOND**: Publish [Packaging Release](https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases)
    - Review draft release
@@ -153,3 +153,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Changelog process
 - [Packaging Repo](https://github.com/SumoLogic/sumologic-otel-collector-packaging) - Release workflows
 - [Container Repo](https://github.com/SumoLogic/sumologic-otel-collector-containers) - Container releases
+
+[pr_1944]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1944
+[pr_1965]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1965
+[collector_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
