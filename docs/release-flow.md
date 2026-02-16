@@ -2,12 +2,21 @@
 
 Complete release process for Sumo Logic OpenTelemetry Collector.
 
+## Before You Start
+
+1. Start a thread in **#pd-ot-collector-release** channel
+2. Upload the release checklist document
+   - Use this [sample release checklist](https://docs.google.com/document/d/17GPloLV18vJAQ5p9UPSV-KUFQnKEhrsqzF-eXGhAnuE/edit?tab=t.0) as template
+3. Track all release activities in this thread
+
 ## Steps
 
 ### Step 1: Renovate Bot
 
 1. Run Renovate bot ([renovate-scheduler.yml](../.github/workflows/renovate-scheduler.yml))
 2. Wait for PR: `chore(deps): bump opentelemetry-collector`
+
+**Sample PR**: [#1944](https://github.com/SumoLogic/sumologic-otel-collector/pull/1944)
 
 ### Step 2: Merge Dependency PR
 
@@ -41,16 +50,15 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
    git push origin prepare-release-0.144.0-sumo-0
    ```
 
-**Reference**: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog)
+**Sample PR**: [#1965](https://github.com/SumoLogic/sumologic-otel-collector/pull/1965)
 
 ### Step 4: Find Build Number
 
 1. Go to [Dev Builds](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)
-2. Find workflow run from your prepare release PR
-3. Open the workflow run and check the **"Trigger Remote Workflow"** step
-4. Get the workflow ID from this step (e.g., `11672946742`)
+2. Open the workflow run and check the **"Trigger Remote Workflow"** step
+3. Get the workflow ID from this step (e.g., `11672946742`)
 
-5. Search for this workflow ID in packaging repo to get build number:
+4. Search for this workflow ID in packaging repo to get build number:
 
    **CLI:**
    ```bash
@@ -60,7 +68,6 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
      --json displayTitle,number,url \
      -q ".[] | select(.displayTitle | contains(\"${WORKFLOW_ID}\"))"
    ```
-   
    Output will show the build number (e.g., `"number": 1790`)
 
    **Manual:**
@@ -76,14 +83,11 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 1. Go to [sumologic-otel-collector-packaging](https://github.com/SumoLogic/sumologic-otel-collector-packaging)
 2. Actions → **[CI-to-RC Promotion](https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/ci-to-rc-promotion.yml)** workflow
-3. Click **Run workflow**
-4. Enter:
+3. Enter:
    - **Version**: `0.144.0-1790` (full version with build number)
-5. Click **Run workflow**
-6. Workflow will automatically:
+4. Workflow will automatically:
    - Promote packaging artifacts (ci → rc)
    - Promote container images (ci → rc)
-7. Verify completion and check summary
 
 **Reference**: [CI to RC Promotion Guide](https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/ci-to-rc-promotion.md)
 
@@ -97,15 +101,13 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 1. Go to [sumologic-otel-collector-packaging](https://github.com/SumoLogic/sumologic-otel-collector-packaging)
 2. Actions → **[Release Orchestrator](https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/release-orchestrator.yml)** workflow
-3. Click **Run workflow**
-4. Enter:
+3. Enter:
    - **Package version**: `0.144.0-1790` (full version with build number)
-5. Click **Run workflow**
-6. Workflow will automatically:
+4. Workflow will automatically:
    - Promote packages (rc → stable)
    - Create draft releases for collector, packaging, and containers
 
-**Post-Release - Publish Draft Releases (⚠️ IMPORTANT ORDER):**
+## **Publish Draft Releases (⚠️ IMPORTANT ORDER):**
 
 **The orchestrator only creates draft releases. You must publish them manually in this exact order:**
 
@@ -127,28 +129,9 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 **Reference**: [Release Orchestrator Guide](https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release-orchestrator.md)
 
 
-## Sample PRs
-
-### Renovate PR
-```
-Title: chore(deps): bump opentelemetry-collector from 0.143.0 to 0.144.0
-
-Body:
-Updates OpenTelemetry Collector dependencies to 0.144.0.
-```
-
-### Prepare Release PR
-```
-Title: chore: prepare release 0.144.0-sumo-0
-
-Body:
-- Updated CHANGELOG.md
-- Version bump to 0.144.0-sumo-0
-```
-
 ## References
 
-- [release.md](./release.md) - Alternative release process
+- [release.md](./release.md) - Manual release process
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Changelog process  
 - [Packaging Repo](https://github.com/SumoLogic/sumologic-otel-collector-packaging) - Release workflows
 - [Container Repo](https://github.com/SumoLogic/sumologic-otel-collector-containers) - Container releases
