@@ -40,23 +40,30 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 ### Step 3: Prepare Release PR
 
 1. Create Python virtual environment:
+
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
 
 2. Install dependencies:
+
+
    ```bash
    pip install towncrier==23.6.0
    make install-prettier
    ```
 
 3. Update changelog:
+
+
    ```bash
    make update-changelog VERSION=0.144.0-sumo-0
    ```
 
 4. Create and merge PR:
+
+
    ```bash
    git checkout -b prepare-release-0.144.0-sumo-0
    git commit -m "chore: prepare release 0.144.0-sumo-0"
@@ -74,6 +81,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 4. Search for this workflow ID in packaging repo to get build number:
 
    **CLI:**
+
    ```bash
    WORKFLOW_ID="11672946742"
    gh run list -R sumologic/sumologic-otel-collector-packaging \
@@ -81,6 +89,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
      --json displayTitle,number,url \
      -q ".[] | select(.displayTitle | contains(\"${WORKFLOW_ID}\"))"
    ```
+
    Output will show the build number (e.g., `"number": 1790`)
 
    **Manual:**
@@ -88,7 +97,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
    - Search for your workflow ID
    - Note build number (e.g., `#1790`)
 
-6. Collector version format: `0.144.0-1790` (VERSION-BUILD_NUMBER)
+5. Collector version format: `0.144.0-1790` (VERSION-BUILD_NUMBER)
 
 **Reference**: [release.md](./release.md#determine-the-workflow-run-id-to-release)
 
@@ -141,10 +150,9 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 **Reference**: [Release Orchestrator Guide](https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release-orchestrator.md)
 
-
 ## References
 
 - [release.md](./release.md) - Manual release process
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Changelog process  
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Changelog process
 - [Packaging Repo](https://github.com/SumoLogic/sumologic-otel-collector-packaging) - Release workflows
 - [Container Repo](https://github.com/SumoLogic/sumologic-otel-collector-containers) - Container releases
