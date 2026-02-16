@@ -2,6 +2,19 @@
 
 Complete release process for Sumo Logic OpenTelemetry Collector.
 
+## Table of Contents
+
+- [Before You Start](#before-you-start)
+- [Steps](#steps)
+  - [Step 1: Renovate Bot](#step-1-renovate-bot)
+  - [Step 2: Merge Dependency PR](#step-2-merge-dependency-pr)
+  - [Step 3: Prepare Release PR](#step-3-prepare-release-pr)
+  - [Step 4: Find Build Number](#step-4-find-build-number)
+  - [Step 5: CI to RC Promotion](#step-5-ci-to-rc-promotion)
+  - [Step 6: QE Sign-off](#step-6-qe-sign-off)
+  - [Step 7: Release Orchestrator](#step-7-release-orchestrator)
+- [References](#references)
+
 ## Before You Start
 
 1. Start a thread in **#pd-ot-collector-release** channel
