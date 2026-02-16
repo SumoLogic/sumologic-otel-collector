@@ -1,0 +1,1 @@
+chore(docs): Release flow of collector
