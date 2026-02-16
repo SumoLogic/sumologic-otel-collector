@@ -102,6 +102,6 @@ To install Sumo Logic Distribution for OpenTelemetry Collector with Puppet on Va
 
 [puppet]: https://puppet.com/
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
-[installation_token]: https://help.sumologic.com/docs/manage/security/installation-tokens/
+[installation_token]: https://www.sumologic.com/help/docs/manage/security/installation-tokens/
 [base_configuration]: ../sumologic.yaml
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension
