@@ -90,7 +90,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
    Output will show the build number (e.g., `"number": 1790`)
 
    **Manual:**
-   - Go to [Packaging Build](https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml)
+   - Go to [Packaging Build][packaging_build_workflow]
    - Search for your workflow ID
    - Note build number (e.g., `#1790`)
 
@@ -100,15 +100,15 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 ### Step 5: CI to RC Promotion
 
-1. Go to [sumologic-otel-collector-packaging](https://github.com/SumoLogic/sumologic-otel-collector-packaging)
-2. Actions → **[CI-to-RC Promotion](https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/ci-to-rc-promotion.yml)** workflow
+1. Go to [sumologic-otel-collector-packaging][packaging_repo]
+2. Actions → **[CI-to-RC Promotion][ci_to_rc_workflow]** workflow
 3. Enter:
    - **Version**: `0.144.0-1790` (full version with build number)
 4. Workflow will automatically:
    - Promote packaging artifacts (ci → rc)
    - Promote container images (ci → rc)
 
-**Reference**: [CI to RC Promotion Guide](https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/ci-to-rc-promotion.md)
+**Reference**: [CI to RC Promotion Guide][ci_to_rc_guide]
 
 ### Step 6: QE Sign-off
 
@@ -118,8 +118,8 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 ### Step 7: Release Orchestrator
 
-1. Go to [sumologic-otel-collector-packaging](https://github.com/SumoLogic/sumologic-otel-collector-packaging)
-2. Actions → **[Release Orchestrator](https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/release-orchestrator.yml)** workflow
+1. Go to [sumologic-otel-collector-packaging][packaging_repo]
+2. Actions → **[Release Orchestrator][release_orchestrator_workflow]** workflow
 3. Enter:
    - **Package version**: `0.144.0-1790` (full version with build number)
 4. Workflow will automatically:
@@ -137,23 +137,32 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
    - Publish release
    - Wait for [post-release workflow](../.github/workflows/post-release.yml) to complete (creates package tags)
 
-2. **SECOND**: Publish [Packaging Release](https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases)
+2. **SECOND**: Publish [Packaging Release][packaging_releases]
    - Review draft release
    - Publish release
 
-3. **THIRD**: Publish [Containers Release](https://github.com/SumoLogic/sumologic-otel-collector-containers/releases)
+3. **THIRD**: Publish [Containers Release][containers_releases]
    - Review draft release
    - Publish release
 
-**Reference**: [Release Orchestrator Guide](https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release-orchestrator.md)
+**Reference**: [Release Orchestrator Guide][release_orchestrator_guide]
 
 ## References
 
 - [release.md](./release.md) - Manual release process
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Changelog process
-- [Packaging Repo](https://github.com/SumoLogic/sumologic-otel-collector-packaging) - Release workflows
-- [Container Repo](https://github.com/SumoLogic/sumologic-otel-collector-containers) - Container releases
+- [Packaging Repo][packaging_repo] - Release workflows
+- [Container Repo][containers_repo] - Container releases
 
 [pr_1944]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1944
 [pr_1965]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1965
 [collector_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
+[packaging_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
+[packaging_build_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/build_packages.yml
+[packaging_releases]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/releases
+[ci_to_rc_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/ci-to-rc-promotion.yml
+[ci_to_rc_guide]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/ci-to-rc-promotion.md
+[release_orchestrator_workflow]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/actions/workflows/release-orchestrator.yml
+[release_orchestrator_guide]: https://github.com/SumoLogic/sumologic-otel-collector-packaging/blob/main/docs/release-orchestrator.md
+[containers_repo]: https://github.com/SumoLogic/sumologic-otel-collector-containers
+[containers_releases]: https://github.com/SumoLogic/sumologic-otel-collector-containers/releases
