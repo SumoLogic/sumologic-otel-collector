@@ -11,8 +11,8 @@ set -euo pipefail
 # This script will be removed in a future release.
 #
 # For the latest installation instructions, please visit:
-# - Linux: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
-# - MacOS: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
+# - Linux: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-linux/
+# - MacOS: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-macos/
 #
 ############################################################################
 
@@ -1726,7 +1726,7 @@ echo "Please use the installation scripts from the packaging repository instead.
 echo "This script will be removed in a future release."
 echo ""
 echo "For the latest installation instructions, visit:"
-echo "  https://help.sumologic.com/docs/send-data/opentelemetry-collector/"
+echo "  https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/"
 echo "============================================================================="
 echo ""
 
