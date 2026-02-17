@@ -12,7 +12,7 @@
 # https://download-otel.sumologic.com/latest/download/install.ps1
 #
 # For the latest installation instructions, please visit:
-# https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
+# https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-windows/
 #
 ################################################################################
 
@@ -432,7 +432,7 @@ Write-Host "Download the latest script from:"
 Write-Host "  https://download-otel.sumologic.com/latest/download/install.ps1" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "For the latest installation instructions, visit:"
-Write-Host "  https://help.sumologic.com/docs/send-data/opentelemetry-collector/" -ForegroundColor Cyan
+Write-Host "  https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/" -ForegroundColor Cyan
 Write-Host "=============================================================================" -ForegroundColor Yellow
 Write-Host ""
 

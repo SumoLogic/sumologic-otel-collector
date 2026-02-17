@@ -11,7 +11,7 @@ This document explains how to obtain FIPS-capable binaries and how to run them i
 
 ### Linux
 
-Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/#fips)
+Refer to [FIPS section of installation documentation](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-linux/#fips)
 
 ### MacOS
 
@@ -19,7 +19,7 @@ We do not provide FIPS-compliant binary for macOS.
 
 ### Windows
 
-Refer to [FIPS section of installation documentation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/#fips)
+Refer to [FIPS section of installation documentation](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-windows/#fips)
 
 ### Docker images
 
