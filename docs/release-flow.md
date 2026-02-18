@@ -4,6 +4,7 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 ## Table of Contents
 
+- [Before You Start](#before-you-start)
 - [Steps](#steps)
   - [Step 1: Renovate Bot](#step-1-renovate-bot)
   - [Step 2: Merge Dependency PR](#step-2-merge-dependency-pr)
@@ -13,6 +14,10 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
   - [Step 6: QE Sign-off](#step-6-qe-sign-off)
   - [Step 7: Release Orchestrator](#step-7-release-orchestrator)
 - [References](#references)
+
+## Before You Start
+
+Fill in the [release checklist template](https://docs.google.com/document/d/17GPloLV18vJAQ5p9UPSV-KUFQnKEhrsqzF-eXGhAnuE/edit?tab=t.0) and follow the steps documented there.
 
 ## Steps
 
