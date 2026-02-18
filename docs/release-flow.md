@@ -15,13 +15,6 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
   - [Step 7: Release Orchestrator](#step-7-release-orchestrator)
 - [References](#references)
 
-## Before You Start
-
-1. Start a thread in **#pd-ot-collector-release** channel
-2. Upload the release checklist document
-   - Use this [sample release checklist](https://docs.google.com/document/d/17GPloLV18vJAQ5p9UPSV-KUFQnKEhrsqzF-eXGhAnuE/edit?tab=t.0) as template
-3. Track all release activities in this thread
-
 ## Steps
 
 ### Step 1: Renovate Bot
