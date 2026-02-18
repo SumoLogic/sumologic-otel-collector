@@ -4,7 +4,6 @@ Complete release process for Sumo Logic OpenTelemetry Collector.
 
 ## Table of Contents
 
-- [Before You Start](#before-you-start)
 - [Steps](#steps)
   - [Step 1: Renovate Bot](#step-1-renovate-bot)
   - [Step 2: Merge Dependency PR](#step-2-merge-dependency-pr)
