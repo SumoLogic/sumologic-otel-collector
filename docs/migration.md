@@ -2510,9 +2510,9 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.145.0/extension/sumologicextension/README.md
 [sumologicexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.145.0/exporter/sumologicexporter/README.md
 [syslogexporter]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.145.0/exporter/syslogexporter/README.md
-[user.properties]: https://help.sumologic.com/docs/send-data/installed-collectors/collector-installation-reference/user-properties
+[user.properties]: https://www.sumologic.com/help/docs/send-data/installed-collectors/collector-installation-reference/user-properties
 [proxy]: https://opentelemetry.io/docs/collector/configuration/#proxy-support
-[common-parameters]: https://help.sumologic.com/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
+[common-parameters]: https://www.sumologic.com/help/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
 [syslogparser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
 [telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
@@ -2529,7 +2529,7 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [dockerstatsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.145.0/receiver/dockerstatsreceiver
 [dockerstatsmetrics]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.145.0/receiver/dockerstatsreceiver/documentation.md
 [sumologicprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.145.0/processor/sumologicprocessor
-[mask-filter]: https://help.sumologic.com/docs/send-data/use-json-configure-sources/#example-mask-filter
+[mask-filter]: https://www.sumologic.com/help/docs/send-data/use-json-configure-sources/#example-mask-filter
 [ottlfuncs]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.145.0/pkg/ottl/ottlfuncs#functions
-[forward-data]: https://help.sumologic.com/docs/manage/data-archiving/installed-collectors/
-[ingest-budget]: https://help.sumologic.com/docs/manage/ingestion-volume/ingest-budgets/
+[forward-data]: https://www.sumologic.com/help/docs/manage/data-archiving/installed-collectors/
+[ingest-budget]: https://www.sumologic.com/help/docs/manage/ingestion-volume/ingest-budgets/

@@ -36,6 +36,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/dbstorage v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/sumologicextension v0.145.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.145.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.145.0
@@ -140,6 +141,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.145.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.51.0
+	go.opentelemetry.io/collector/component/componentstatus v0.145.0
 	go.opentelemetry.io/collector/component/componenttest v0.145.0
 	go.opentelemetry.io/collector/config/configauth v1.51.0
 	go.opentelemetry.io/collector/config/confighttp v0.145.0
@@ -186,7 +188,7 @@ require (
 	code.cloudfoundry.org/go-diodes v0.0.0-20241007161556-ec30366c7912 // indirect
 	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible // indirect
 	code.cloudfoundry.org/rfc5424 v0.0.0-20201103192249-000122071b78 // indirect
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/AthenZ/athenz v1.12.13 // indirect
@@ -521,7 +523,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/resourcetotelemetry v0.145.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/sampling v0.145.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.145.0 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/status v0.145.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/azure v0.145.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/azurelogs v0.145.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.145.0 // indirect
@@ -626,7 +627,6 @@ require (
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector v0.145.0 // indirect
 	go.opentelemetry.io/collector/client v1.51.0 // indirect
-	go.opentelemetry.io/collector/component/componentstatus v0.145.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.51.0 // indirect
 	go.opentelemetry.io/collector/config/configgrpc v0.145.0 // indirect
 	go.opentelemetry.io/collector/config/configmiddleware v1.51.0 // indirect

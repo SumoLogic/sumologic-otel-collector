@@ -13,9 +13,9 @@
 >
 > **For the latest installation instructions, please refer to the official documentation:**
 >
-> - [Linux Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/)
-> - [MacOS Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/)
-> - [Windows Installation](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/)
+> - [Linux Installation](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-linux/)
+> - [MacOS Installation](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-macos/)
+> - [Windows Installation](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-windows/)
 
 The Sumo Logic Distribution for OpenTelemetry Collector can be run using either the binary file available in [Github releases][github_releases] or
 the container images stored in AWS Public ECR under the following repositories:
@@ -33,9 +33,9 @@ the container images stored in AWS Public ECR under the following repositories:
 - [Chef](#chef)
 
 [packaging_repo]: https://github.com/SumoLogic/sumologic-otel-collector-packaging
-[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
-[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
-[windows_installation]:https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
+[linux_installation]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-linux/
+[macos_installation]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-macos/
+[windows_installation]:https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-windows/
 [github_releases]: https://github.com/SumoLogic/sumologic-otel-collector/releases
 
 ## Container image
@@ -99,14 +99,14 @@ using the image available in the one of the following repositories:
 ## Ansible
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Ansible is described in
-[examples/ansible](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/ansible/).
+[examples/ansible](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector/ansible/).
 
 ## Puppet
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Puppet is described in
-[examples/puppet](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/puppet/).
+[examples/puppet](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector/puppet/).
 
 ## Chef
 
 Example installation of Sumo Logic Distribution for OpenTelemetry Collector with Chef is described in
-[examples/chef](https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector/chef/.
+[examples/chef](https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector/chef/.

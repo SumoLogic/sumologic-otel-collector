@@ -7,7 +7,7 @@
 #   }
 #
 # @param installation_token
-#   Sumo Logic installation token, rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
+#   Sumo Logic installation token, rel: https://www.sumologic.com/help/docs/manage/security/installation-tokens/
 # @param collector_tags
 #   Collector tags, these are applied to all processed data
 # @param api_url

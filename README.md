@@ -140,14 +140,14 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 
 [otc_link]: https://github.com/open-telemetry/opentelemetry-collector
 [sumologic]: https://www.sumologic.com
-[linux_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-linux/
-[macos_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-macos/
-[windows_installation]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/install-collector-windows/
-[performance]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/#performance
-[known issues]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
-[purpose]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
-[versioning]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
-[breaking]: https://help.sumologic.com/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[linux_installation]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-linux/
+[macos_installation]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-macos/
+[windows_installation]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/install-collector-windows/
+[performance]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/#performance
+[known issues]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/troubleshooting-faq/#known-issues
+[purpose]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/
+[versioning]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
+[breaking]: https://www.sumologic.com/help/docs/send-data/opentelemetry-collector/sumo-logic-opentelemetry-vs-opentelemetry-upstream-relationship/#versioning-policy
 [linux_amd64]: ./docs/installation.md#linux-on-amd64-x86-64
 [linux_arm64]: ./docs/installation.md#linux-on-arm64
 [mac_amd64]: ./docs/installation.md#macos-on-amd64-x86-64

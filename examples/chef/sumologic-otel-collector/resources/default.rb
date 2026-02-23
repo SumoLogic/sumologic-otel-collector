@@ -2,7 +2,7 @@
 unified_mode true
 
 # Sumo Logic installation token
-# rel: https://help.sumologic.com/docs/manage/security/installation-tokens/
+# rel: https://www.sumologic.com/help/docs/manage/security/installation-tokens/
 property :installation_token, String, required: true
 # Collector tags, these are applied to all processed data
 property :collector_tags, Hash, default: {}
