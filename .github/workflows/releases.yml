@@ -93,6 +93,8 @@ jobs:
   create-release:
     name: Create Github release
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     needs:
       - get-version
     steps:
@@ -124,7 +126,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_CI_TOKEN || secrets.GITHUB_TOKEN }}
           owner: SumoLogic
           repo: sumologic-otel-collector
           draft: true
