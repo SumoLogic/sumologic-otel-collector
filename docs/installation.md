@@ -46,6 +46,8 @@ using the image available in the one of the following repositories:
 - [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
 - [sumologic/sumologic-otel-collector](https://hub.docker.com/repository/docker/sumologic/sumologic-otel-collector)
 
+### Locally Manged Collector
+
 1. Set the release version variable:
 
    ```bash
@@ -95,6 +97,40 @@ using the image available in the one of the following repositories:
 
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension/README.md
 [sumologicextension_storing_credentials]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension#storing-credentials
+
+### Remotely Manged Collector
+
+1. Set the release version variable:
+
+   ```bash
+   export RELEASE_VERSION=0.75.0-sumo-0
+   ```
+1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
+
+   ```bash
+   docker run --rm -ti \
+      --name sumologic-otel-collector \
+      -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
+      -e REMOTELY_MANAGED=true \
+      -v "/var/lib/otelcol/file_storage:/var/lib/otelcol/file_storage" \
+      -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
+      "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}" \
+      --remotely-managed \
+      --tag "host.group=default" \
+      --tag "deployment.environment=default" \
+      --opamp-api wss://opamp-events.sumologic.com/v1/opamp \
+      --config-only
+    ```
+   Collector CLI Arguments
+   | Name                 | Description |
+   |----------------------|-------------|
+   | `--tag`              | Sets tag for collector. This argument can be used multiple times (one per tag). |
+   | `--api`              | API URL. Forces the collector to use a non-default API endpoint. |
+   | `--opamp-api`        | OpAmp API URL. Forces the collector to use a non-default OpAmp API endpoint. |
+   | `--remotely-managed` | Remotely manage the collector configuration with Sumo Logic. |
+   | `--ephemeral`        | Deletes the collector from Sumo Logic after 12 hours of inactivity. |
+   | `--timezone`         | Timezone for the collector. |
+   | `--collector-name`   | Sets the collector name. |
 
 ## Ansible
 
