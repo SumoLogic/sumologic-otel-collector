@@ -122,7 +122,9 @@ using the image available in the one of the following repositories:
    --opamp-api wss://opamp-events.sumologic.com/v1/opamp \
    --config-only
    ```
+
 Collector CLI Arguments
+
 | Name                 | Description                                                                     |
 | -------------------- | ------------------------------------------------------------------------------- |
 | `--tag`              | Sets tag for collector. This argument can be used multiple times (one per tag). |
@@ -132,7 +134,6 @@ Collector CLI Arguments
 | `--ephemeral`        | Deletes the collector from Sumo Logic after 12 hours of inactivity.             |
 | `--timezone`         | Timezone for the collector.                                                     |
 | `--collector-name`   | Sets the collector name.                                                        |
-
 
 ## Ansible
 
