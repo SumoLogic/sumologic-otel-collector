@@ -15,7 +15,6 @@
 package kube
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -1188,23 +1187,40 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 
 	c := client.(*WatchClient)
 
-	ch := waitForWatchToBeEstablished(c.kc.(*fake.Clientset), "pods")
-	go func() {
-		c.Start()
-	}()
-	defer c.Stop()
-	<-ch
+	// For client-go v0.35.1+: Instead of relying on the informer's watch mechanism
+	// which requires bookmark events from the fake client, we directly test the
+	// handler methods. This preserves the test's purpose (verifying cache add/delete
+	// behavior) while avoiding the fake client's List+Watch synchronization issues.
+	// Reference: https://github.com/kubernetes/kubernetes/pull/136143
 
-	eventuallyNPodsInCache := func(t *testing.T, n int) {
-		assert.Eventually(t, func() bool {
-			c.m.RLock()
-			l := len(c.Pods)
-			c.m.RUnlock()
-			return l == n
-		}, 5*time.Second, 10*time.Millisecond)
+	// Start the delete loop with a very short grace period
+	gracePeriod := 10 * time.Millisecond
+	go c.deleteLoop(time.Millisecond, gracePeriod)
+	defer close(c.stopCh)
+
+	assertNPodsInCache := func(t *testing.T, n int) {
+		t.Helper()
+		c.m.RLock()
+		defer c.m.RUnlock()
+		assert.Equal(t, n, len(c.Pods), "unexpected number of pods in cache")
+	}
+
+	clearCache := func() {
+		c.m.Lock()
+		defer c.m.Unlock()
+		c.Pods = map[PodIdentifier]*Pod{}
+		c.deleteMut.Lock()
+		c.deleteQueue = []deleteRequest{}
+		c.deleteMut.Unlock()
+	}
+
+	waitForDeletion := func(t *testing.T) {
+		t.Helper()
+		time.Sleep(gracePeriod + 50*time.Millisecond)
 	}
 
 	t.Run("pod with IP", func(t *testing.T) {
+		clearCache()
 		pod := &api_v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-pod",
@@ -1216,18 +1232,26 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 			},
 		}
 
-		_, err = c.kc.CoreV1().Pods(namespace).
-			Create(context.Background(), pod, metav1.CreateOptions{})
-		require.NoError(t, err)
-		eventuallyNPodsInCache(t, 3)
+		// Directly call the handler that would be invoked by the informer
+		c.handlePodAdd(pod)
+		assertNPodsInCache(t, 3) // pod by IP, UID, and qualified name
 
-		err = c.kc.CoreV1().Pods(namespace).
-			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
-		require.NoError(t, err)
-		eventuallyNPodsInCache(t, 0)
+		// Verify the pod is in cache with correct data
+		c.m.RLock()
+		cachedPod, exists := c.Pods["10.0.0.1"]
+		c.m.RUnlock()
+		require.True(t, exists, "pod should exist in cache by IP")
+		assert.Equal(t, "my-pod", cachedPod.Name)
+		assert.Equal(t, "f15f0585-a0bc-43a3-96e4-dd2eace75392", string(cachedPod.PodUID))
+
+		// Test deletion
+		c.handlePodDelete(pod)
+		waitForDeletion(t)
+		assertNPodsInCache(t, 0)
 	})
 
 	t.Run("pod without an IP", func(t *testing.T) {
+		clearCache()
 		pod := &api_v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-pod",
@@ -1236,18 +1260,25 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 			},
 		}
 
-		_, err = c.kc.CoreV1().Pods(namespace).
-			Create(context.Background(), pod, metav1.CreateOptions{})
-		require.NoError(t, err)
-		eventuallyNPodsInCache(t, 2)
+		// Directly call the handler
+		c.handlePodAdd(pod)
+		assertNPodsInCache(t, 2) // pod by UID and qualified name (no IP)
 
-		err = c.kc.CoreV1().Pods(namespace).
-			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
-		require.NoError(t, err)
-		eventuallyNPodsInCache(t, 0)
+		// Verify the pod is in cache by UID
+		c.m.RLock()
+		cachedPod, exists := c.Pods[PodIdentifier("f15f0585-a0bc-43a3-96e4-dd2eace75392")]
+		c.m.RUnlock()
+		require.True(t, exists, "pod should exist in cache by UID")
+		assert.Equal(t, "my-pod", cachedPod.Name)
+
+		// Test deletion
+		c.handlePodDelete(pod)
+		waitForDeletion(t)
+		assertNPodsInCache(t, 0)
 	})
 
 	t.Run("with deleted final state unknown", func(t *testing.T) {
+		clearCache()
 		pod := &api_v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "my-pod",
@@ -1256,25 +1287,17 @@ func Test_PodsGetAddedAndDeletedFromCache(t *testing.T) {
 			},
 		}
 
-		_, err = c.kc.CoreV1().Pods(namespace).
-			Create(context.Background(), pod, metav1.CreateOptions{})
-		require.NoError(t, err)
-		eventuallyNPodsInCache(t, 2)
+		// Add the pod
+		c.handlePodAdd(pod)
+		assertNPodsInCache(t, 2)
 
-		// Rather than set up a stub Informer just for this case, bypass the
-		// informer + fake k8s client entirely. Manually call the delete
-		// handler with DeletedFinalStateUnknown.
+		// Test deletion with DeletedFinalStateUnknown wrapper
 		c.handlePodDelete(cache.DeletedFinalStateUnknown{
 			Key: fmt.Sprintf("%s/my-pod", namespace),
 			Obj: pod,
 		})
-		defer func() {
-			err = c.kc.CoreV1().Pods(namespace).
-				Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
-			require.NoError(t, err)
-		}()
-
-		eventuallyNPodsInCache(t, 0)
+		waitForDeletion(t)
+		assertNPodsInCache(t, 0)
 	})
 }
 
