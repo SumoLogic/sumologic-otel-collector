@@ -9,6 +9,10 @@ permissions:
   id-token: write
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   trigger-jenkins:
     name: Trigger E2E Tests
@@ -24,6 +28,8 @@ jobs:
 
       - name: Fetch secrets and trigger Jenkins job
         run: |
+          set -euo pipefail
+
           ACCESS_KEY_JSON=$(aws secretsmanager get-secret-value \
             --secret-id "${{ secrets.AWS_SECRET_ALB_KEY }}" \
             --region ${{ vars.AWS_REGION || 'us-west-2' }} \
@@ -31,12 +37,14 @@ jobs:
             --output text)
 
           if [ -z "$ACCESS_KEY_JSON" ]; then
+            echo "Failed to fetch secrets"
             exit 1
           fi
 
           ACCESS_KEY=$(echo "$ACCESS_KEY_JSON" | jq -r '.api_key' 2>/dev/null)
 
           if [ -z "$ACCESS_KEY" ] || [ "$ACCESS_KEY" == "null" ]; then
+            echo "Failed to parse secrets"
             exit 1
           fi
 
@@ -47,13 +55,15 @@ jobs:
             --output text)
 
           if [ -z "$JENKINS_CREDS" ]; then
+            echo "Failed to fetch secrets"
             exit 1
           fi
 
           JENKINS_USER=$(echo "$JENKINS_CREDS" | jq -r 'keys[0]' 2>/dev/null)
-          JENKINS_TOKEN=$(echo "$JENKINS_CREDS" | jq -r '.[]' 2>/dev/null)
+          JENKINS_TOKEN=$(echo "$JENKINS_CREDS" | jq -r --arg user "$JENKINS_USER" '.[$user]' 2>/dev/null)
 
           if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
+            echo "Failed to parse secrets"
             exit 1
           fi
 
@@ -62,6 +72,11 @@ jobs:
           echo "::add-mask::$JENKINS_TOKEN"
 
           JENKINS_URL="${{ secrets.JENKINS_E2E_WEBHOOK_URL }}"
+
+          if [ -z "$JENKINS_URL" ]; then
+            echo "Webhook URL not configured"
+            exit 1
+          fi
 
           RESPONSE=$(curl --fail-with-body -s -w "\n%{http_code}" -X POST \
             --connect-timeout 10 \
@@ -73,12 +88,15 @@ jobs:
           CURL_EXIT=$?
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 
+          echo "::add-mask::$RESPONSE"
+
+          if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 300 ]; then
+            exit 0
+          fi
+
           if [ $CURL_EXIT -ne 0 ]; then
+            echo "Failed to trigger job"
             exit 1
           fi
 
-          if [ "${HTTP_CODE}" -eq 200 ] || [ "${HTTP_CODE}" -eq 201 ]; then
-            exit 0
-          else
-            exit 1
-          fi
+          exit 1
