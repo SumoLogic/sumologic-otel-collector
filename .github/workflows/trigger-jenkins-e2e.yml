@@ -1,0 +1,95 @@
+name: Trigger Jenkins E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  trigger-jenkins:
+    name: Trigger E2E Tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-${{ github.repository_owner }}-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Fetch secrets from AWS Secrets Manager
+        id: get-secrets
+        run: |
+          ACCESS_KEY_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "${{ secrets.AWS_SECRET_ALB_KEY }}" \
+            --region ${{ vars.AWS_REGION || 'us-west-2' }} \
+            --query 'SecretString' \
+            --output text)
+          
+          if [ -z "$ACCESS_KEY_JSON" ]; then
+            exit 1
+          fi
+          
+          ACCESS_KEY=$(echo "$ACCESS_KEY_JSON" | jq -r '.api_key' 2>/dev/null)
+          
+          if [ -z "$ACCESS_KEY" ] || [ "$ACCESS_KEY" == "null" ]; then
+            exit 1
+          fi
+          
+          JENKINS_CREDS=$(aws secretsmanager get-secret-value \
+            --secret-id "${{ secrets.AWS_SECRET_JENKINS_TOKEN }}" \
+            --region ${{ vars.AWS_REGION || 'us-west-2' }} \
+            --query 'SecretString' \
+            --output text)
+          
+          if [ -z "$JENKINS_CREDS" ]; then
+            exit 1
+          fi
+          
+          JENKINS_USER=$(echo "$JENKINS_CREDS" | jq -r 'keys[0]' 2>/dev/null)
+          JENKINS_TOKEN=$(echo "$JENKINS_CREDS" | jq -r '.[]' 2>/dev/null)
+          
+          if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
+            exit 1
+          fi
+          
+          echo "::add-mask::$JENKINS_USER"
+          echo "::add-mask::$ACCESS_KEY"
+          echo "::add-mask::$JENKINS_TOKEN"
+          
+          echo "access_key=$ACCESS_KEY" >> $GITHUB_OUTPUT
+          echo "jenkins_user=$JENKINS_USER" >> $GITHUB_OUTPUT
+          echo "jenkins_token=$JENKINS_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Trigger Jenkins E2E job
+        env:
+          JENKINS_USER: ${{ steps.get-secrets.outputs.jenkins_user }}
+          JENKINS_TOKEN: ${{ steps.get-secrets.outputs.jenkins_token }}
+          ACCESS_KEY: ${{ steps.get-secrets.outputs.access_key }}
+        run: |
+          JENKINS_URL="${{ secrets.JENKINS_E2E_WEBHOOK_URL }}"
+          
+          RESPONSE=$(curl --fail-with-body -s -w "\n%{http_code}" -X POST \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            -H "X-Api-Access-Key: ${ACCESS_KEY}" \
+            "${JENKINS_URL}")
+          
+          CURL_EXIT=$?
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ $CURL_EXIT -ne 0 ]; then
+            exit 1
+          fi
+          
+          if [ "${HTTP_CODE}" -eq 200 ] || [ "${HTTP_CODE}" -eq 201 ]; then
+            exit 0
+          else
+            exit 1
+          fi
