@@ -41,9 +41,9 @@ jobs:
             exit 1
           fi
 
-          ACCESS_KEY=$(echo "$ACCESS_KEY_JSON" | jq -r '.api_key' 2>/dev/null)
+          ACCESS_KEY=$(echo "$ACCESS_KEY_JSON" | jq -re '.api_key' 2>/dev/null || echo "")
 
-          if [ -z "$ACCESS_KEY" ] || [ "$ACCESS_KEY" == "null" ]; then
+          if [ -z "$ACCESS_KEY" ]; then
             echo "Failed to parse secrets"
             exit 1
           fi
@@ -78,25 +78,21 @@ jobs:
             exit 1
           fi
 
-          RESPONSE=$(curl --fail-with-body -s -w "\n%{http_code}" -X POST \
+          echo "::add-mask::$JENKINS_URL"
+
+          set +e
+          curl --fail -s -X POST \
             --connect-timeout 10 \
             --max-time 30 \
             -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
             -H "X-Api-Access-Key: ${ACCESS_KEY}" \
-            "${JENKINS_URL}")
-
+            "${JENKINS_URL}"
           CURL_EXIT=$?
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          set -e
 
-          echo "::add-mask::$RESPONSE"
-
-          if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 300 ]; then
+          if [ "$CURL_EXIT" -eq 0 ]; then
             exit 0
           fi
 
-          if [ $CURL_EXIT -ne 0 ]; then
-            echo "Failed to trigger job"
-            exit 1
-          fi
-
+          echo "Failed to trigger job"
           exit 1
