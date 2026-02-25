@@ -13,7 +13,7 @@ jobs:
   trigger-jenkins:
     name: Trigger E2E Tests
     runs-on: ubuntu-24.04
-    
+
     steps:
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
