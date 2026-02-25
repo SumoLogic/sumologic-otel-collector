@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.146.0-sumo-0]
+
+### Released 2026-02-25
+
+### Changed
+
+- ci : adding repo context for publishing the release [#1966]
+- ci :removing PAT from renovate bot [#1967]
+- fix(ci): updating go version to 1.26.0 [#1970]
+- chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.145.0 to v0.146.0 [#1981]
+
+[#1966]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1966
+[#1967]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1967
+[#1970]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1970
+[#1981]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1981
+
+[v0.146.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.146.0-sumo-0
+
 ## [v0.145.0-sumo-0]
 
 ### Released 2026-02-10
