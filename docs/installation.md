@@ -111,17 +111,25 @@ using the image available in the one of the following repositories:
    ```bash
    docker run --rm -ti \
    --name sumologic-otel-collector \
+   --user 0:0 \
    -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
-   -e REMOTELY_MANAGED=true \
    -v "/var/lib/otelcol/file_storage:/var/lib/otelcol/file_storage" \
    -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
-   "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}" \
+   -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:${RELEASE_VERSION}" \
    --remotely-managed \
    --tag "host.group=default" \
    --tag "deployment.environment=default" \
-   --opamp-api wss://opamp-events.sumologic.com/v1/opamp \
-   --config-only
+   --opamp-api wss://opamp-events.sumologic.com/v1/opamp
    ```
+
+> **NOTE**:
+>
+> If we want to collect logs from containers running on a Linux host, we need to mount the Docker log 
+> directory using `-v /var/lib/docker/containers:/var/lib/docker/containers:ro \`
+> Additionally, the container must run as the root user, because on Linux the Docker log directory is 
+> only readable by root and does not grant read permissions to other users.
+
 
 Collector CLI Arguments
 
