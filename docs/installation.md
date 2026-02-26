@@ -21,7 +21,7 @@ The Sumo Logic Distribution for OpenTelemetry Collector can be run using either 
 the container images stored in AWS Public ECR under the following repositories:
 
 - [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
-- [sumologic/sumologic-otel-collector](https://hub.docker.com/repository/docker/sumologic/sumologic-otel-collector)
+- [sumologic/sumologic-otel-collector](https://hub.docker.com/r/sumologic/sumologic-otel-collector)
 
 - [Linux][linux_installation]
 - [Windows][windows_installation]
@@ -44,7 +44,9 @@ To run the Sumo Logic Distribution for OpenTelemetry Collector in a container, y
 using the image available in the one of the following repositories:
 
 - [public.ecr.aws/sumologic/sumologic-otel-collector](https://gallery.ecr.aws/sumologic/sumologic-otel-collector)
-- [sumologic/sumologic-otel-collector](https://hub.docker.com/repository/docker/sumologic/sumologic-otel-collector)
+- [sumologic/sumologic-otel-collector](https://hub.docker.com/r/sumologic/sumologic-otel-collector)
+
+### Locally Manged Collector
 
 1. Set the release version variable:
 
@@ -95,6 +97,50 @@ using the image available in the one of the following repositories:
 
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.127.0/extension/sumologicextension/README.md
 [sumologicextension_storing_credentials]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.127.0/extension/sumologicextension#storing-credentials
+
+### Remotely Managed Collector
+
+1. Set the release version variable:
+
+   ```bash
+   export RELEASE_VERSION=0.75.0-sumo-0
+   ```
+
+1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
+
+   ```bash
+   docker run --rm -ti \
+   --name sumologic-otel-collector \
+   --user 0:0 \
+   -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
+   -v "/var/lib/otelcol/file_storage:/var/lib/otelcol/file_storage" \
+   -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
+   -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:${RELEASE_VERSION}" \
+   --remotely-managed \
+   --tag "host.group=default" \
+   --tag "deployment.environment=default" \
+   --opamp-api wss://opamp-events.sumologic.com/v1/opamp
+   ```
+
+> **NOTE**:
+>
+> If we want to collect logs from containers running on a Linux host, we need to mount the Docker log
+> directory using `-v /var/lib/docker/containers:/var/lib/docker/containers:ro \`
+> Additionally, the container must run as the root user, because on Linux the Docker log directory is
+> only readable by root and does not grant read permissions to other users.
+
+Collector CLI Arguments
+
+| Name                 | Description                                                                     |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `--tag`              | Sets tag for collector. This argument can be used multiple times (one per tag). |
+| `--api`              | API URL. Forces the collector to use a non-default API endpoint.                |
+| `--opamp-api`        | OpAmp API URL. Forces the collector to use a non-default OpAmp API endpoint.    |
+| `--remotely-managed` | Remotely manage the collector configuration with Sumo Logic.                    |
+| `--ephemeral`        | Deletes the collector from Sumo Logic after 12 hours of inactivity.             |
+| `--timezone`         | Timezone for the collector.                                                     |
+| `--collector-name`   | Sets the collector name.                                                        |
 
 ## Ansible
 
