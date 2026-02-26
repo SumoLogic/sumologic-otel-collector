@@ -1,0 +1,98 @@
+name: Trigger Jenkins E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  trigger-jenkins:
+    name: Trigger E2E Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-${{ github.repository_owner }}-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Fetch secrets and trigger Jenkins job
+        run: |
+          set -euo pipefail
+
+          ACCESS_KEY_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "${{ secrets.AWS_SECRET_ALB_KEY }}" \
+            --region ${{ vars.AWS_REGION || 'us-west-2' }} \
+            --query 'SecretString' \
+            --output text)
+
+          if [ -z "$ACCESS_KEY_JSON" ]; then
+            echo "Failed to fetch secrets"
+            exit 1
+          fi
+
+          ACCESS_KEY=$(echo "$ACCESS_KEY_JSON" | jq -re '.api_key' 2>/dev/null || echo "")
+
+          if [ -z "$ACCESS_KEY" ]; then
+            echo "Failed to parse secrets"
+            exit 1
+          fi
+
+          JENKINS_CREDS=$(aws secretsmanager get-secret-value \
+            --secret-id "${{ secrets.AWS_SECRET_JENKINS_TOKEN }}" \
+            --region ${{ vars.AWS_REGION || 'us-west-2' }} \
+            --query 'SecretString' \
+            --output text)
+
+          if [ -z "$JENKINS_CREDS" ]; then
+            echo "Failed to fetch secrets"
+            exit 1
+          fi
+
+          JENKINS_USER=$(echo "$JENKINS_CREDS" | jq -r 'keys[0]' 2>/dev/null)
+          JENKINS_TOKEN=$(echo "$JENKINS_CREDS" | jq -r --arg user "$JENKINS_USER" '.[$user]' 2>/dev/null)
+
+          if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
+            echo "Failed to parse secrets"
+            exit 1
+          fi
+
+          echo "::add-mask::$JENKINS_USER"
+          echo "::add-mask::$ACCESS_KEY"
+          echo "::add-mask::$JENKINS_TOKEN"
+
+          JENKINS_URL="${{ secrets.JENKINS_E2E_WEBHOOK_URL }}"
+
+          if [ -z "$JENKINS_URL" ]; then
+            echo "Webhook URL not configured"
+            exit 1
+          fi
+
+          echo "::add-mask::$JENKINS_URL"
+
+          set +e
+          curl --fail -s -X POST \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            -H "X-Api-Access-Key: ${ACCESS_KEY}" \
+            "${JENKINS_URL}"
+          CURL_EXIT=$?
+          set -e
+
+          if [ "$CURL_EXIT" -eq 0 ]; then
+            exit 0
+          fi
+
+          echo "Failed to trigger job"
+          exit 1
