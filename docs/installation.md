@@ -125,11 +125,10 @@ using the image available in the one of the following repositories:
 
 > **NOTE**:
 >
-> If we want to collect logs from containers running on a Linux host, we need to mount the Docker log 
+> If we want to collect logs from containers running on a Linux host, we need to mount the Docker log
 > directory using `-v /var/lib/docker/containers:/var/lib/docker/containers:ro \`
-> Additionally, the container must run as the root user, because on Linux the Docker log directory is 
+> Additionally, the container must run as the root user, because on Linux the Docker log directory is
 > only readable by root and does not grant read permissions to other users.
-
 
 Collector CLI Arguments
 
