@@ -117,7 +117,6 @@ using the image available in the one of the following repositories:
    -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
    "public.ecr.aws/sumologic/sumologic-otel-collector-remote:${RELEASE_VERSION}" \
-   --remotely-managed \
    --tag "host.group=default" \
    --tag "deployment.environment=default" \
    --opamp-api wss://opamp-events.sumologic.com/v1/opamp
@@ -137,7 +136,6 @@ Collector CLI Arguments
 | `--tag`              | Sets tag for collector. This argument can be used multiple times (one per tag). |
 | `--api`              | API URL. Forces the collector to use a non-default API endpoint.                |
 | `--opamp-api`        | OpAmp API URL. Forces the collector to use a non-default OpAmp API endpoint.    |
-| `--remotely-managed` | Remotely manage the collector configuration with Sumo Logic.                    |
 | `--ephemeral`        | Deletes the collector from Sumo Logic after 12 hours of inactivity.             |
 | `--timezone`         | Timezone for the collector.                                                     |
 | `--collector-name`   | Sets the collector name.                                                        |
