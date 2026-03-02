@@ -48,12 +48,6 @@ using the image available in the one of the following repositories:
 
 ### Locally Manged Collector
 
-1. Set the release version variable:
-
-   ```bash
-   export RELEASE_VERSION=0.75.0-sumo-0
-   ```
-
 1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
@@ -69,7 +63,8 @@ using the image available in the one of the following repositories:
     ```bash
     docker run --rm -ti --name sumologic-otel-collector \
        -v "$(pwd)/config.yaml:/etc/otel/config.yaml" \
-       "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}"
+       -v "$(pwd)/credentials:$HOME/.sumologic-otel-collector"
+       "public.ecr.aws/sumologic/sumologic-otel-collector:latest"
     ```
 
 ### Important note about local state files when using `sumologicextension`
@@ -100,12 +95,6 @@ using the image available in the one of the following repositories:
 
 ### Remotely Managed Collector
 
-1. Set the release version variable:
-
-   ```bash
-   export RELEASE_VERSION=0.75.0-sumo-0
-   ```
-
 1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
 
    ```bash
@@ -113,10 +102,10 @@ using the image available in the one of the following repositories:
    --name sumologic-otel-collector \
    --user 0:0 \
    -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
-   -v "/var/lib/otelcol/file_storage:/var/lib/otelcol/file_storage" \
+   -v "/var/lib/otelcol-sumo/file_storage:/var/lib/otelcol-sumo/file_storage" \
    -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
-   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:${RELEASE_VERSION}" \
+   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:latest" \
    --tag "host.group=default" \
    --tag "deployment.environment=default" \
    --opamp-api wss://opamp-events.sumologic.com/v1/opamp
