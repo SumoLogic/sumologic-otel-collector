@@ -62,8 +62,9 @@ using the image available in the one of the following repositories:
 
     ```bash
     docker run --rm -ti --name sumologic-otel-collector \
+       --user 0:0 \
        -v "$(pwd)/config.yaml:/etc/otel/config.yaml" \
-       -v "$(pwd)/credentials:$HOME/.sumologic-otel-collector"
+       -v "$(pwd)/credentials:/etc/otel/.sumologic-otel-collector" \
        "public.ecr.aws/sumologic/sumologic-otel-collector:latest"
     ```
 
@@ -79,8 +80,8 @@ using the image available in the one of the following repositories:
 > registration), local directory (which is configured via `collector_credentials_directory`
 > in `sumologicextension`, and which is by default set to `$HOME/.sumologic-otel-collector`)
 > will be used to store the aforementioned state files.
-> Without any mounts defined on the container the collector will register itself
-> every time it starts up, creating clutter on Sumo Logic Collector Management page.
+> We are mounting the credentials directory to ensure persistence and prevent collector re-registration,
+> while running as root to provide the necessary permissions for host log and collector credentails access.
 >
 > In order to avoid that, use volume mounts or any other mechanism to mount
 > the collector credentials directory to the container to persist the state
