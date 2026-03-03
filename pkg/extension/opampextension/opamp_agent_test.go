@@ -101,7 +101,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyProbabilisticsamplerProcessorConfig", "testdata/opamp.d/opamp-probabilisticsampler-processor-config.yaml", false, ""},
 		{"ApplyAerospikeConfig", "testdata/opamp.d/opamp-aerospike-receiver-config.yaml", false, ""},
 		{"ApplyAzureEventHubConfig", "testdata/opamp.d/opamp-azureeventhub-receiver-config.yaml", false, ""},
-		{"ApplyBigipConfig", "testdata/opamp.d/opamp-bigip-receiver-config.yaml", false, ""},
 		{"ApplyCarbonReceiverConfig", "testdata/opamp.d/opamp-carbon-receiver-config.yaml", false, ""},
 		{"ApplyCloudlfareReceiverConfig", "testdata/opamp.d/opamp-cloudflare-receiver-config.yaml", false, ""},
 		{"ApplyPrometheusExporterConfig", "testdata/opamp.d/opamp-prometheus-exporter-config.yaml", false, ""},

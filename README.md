@@ -60,8 +60,8 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |            [awsfirehose][awsfirehosereceiver]            |            [groupbyattrs][groupbyattrsprocessor]             |          [otlp][otlpexporter]          |                                             | [spanmetrics][spanmetricsconnector] |
 |                [awsxray][awsxrayreceiver]                |            [groupbytrace][groupbytraceprocessor]             |      [otlphttp][otlphttpexporter]      |         [file_storage][filestorage]         |                                     |
 |          [azureeventhub][azureeventhubreceiver]          |                 [`k8s_tagger`][k8sprocessor]                 |    [prometheus][prometheusexporter]    |   [headerssetter][headerssetterextension]   |                                     |
-|                  [bigip][bigipreceiver]                  |           [k8sattributes][k8sattributesprocessor]            |    [sumologic] [sumologicexporter]     |    [health_check][healthcheckextension]     |                                     |
-|                 [carbon][carbonreceiver]                 |                [logdedup][logdedupprocessor]                 |        [syslog][syslogexporter]        |        [host_observer][hostobserver]        |                                     |
+|                 [carbon][carbonreceiver]                 |           [k8sattributes][k8sattributesprocessor]            |    [sumologic] [sumologicexporter]     |    [health_check][healthcheckextension]     |                                     |
+|                                                          |                [logdedup][logdedupprocessor]                 |        [syslog][syslogexporter]        |        [host_observer][hostobserver]        |                                     |
 |                                                          |                   [`lookup`][lookupprocessor]                |                                        |                                             |                                     |
 |                                                          |       [logstransformprocessor][logstransformprocessor]       |                                        |                                             |                                     |
 |                 [chrony][chronyreceiver]                 |           [memory_limiter][memorylimiterprocessor]           |           [nop][nopexporter]           |       [http_forwarder][httpforwarder]       |                                     |
@@ -163,7 +163,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [awsfirehosereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/awsfirehosereceiver
 [awsxrayreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/awsxrayreceiver
 [azureeventhubreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/azureeventhubreceiver
-[bigipreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.146.0/receiver/bigipreceiver
 [carbonreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/carbonreceiver
 [chronyreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/chronyreceiver
 [cloudfoundryreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/cloudfoundryreceiver

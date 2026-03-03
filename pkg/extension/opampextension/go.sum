@@ -1904,8 +1904,6 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiv
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver v0.147.0/go.mod h1:NxMBuOEpNwRMcxJnNcmalYb0MSLW1WFVkoKczLAF1mo=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azureeventhubreceiver v0.147.0 h1:uYVhDmFkpSZTxsZnUpHxSpwsREZa2LC0b9T88ZH33kw=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azureeventhubreceiver v0.147.0/go.mod h1:8A2TVYHtzrCGadDrgAGL1JVUmop5YcAKeVYnCkuGKRA=
-github.com/open-telemetry/opentelemetry-collector-contrib/receiver/bigipreceiver v0.146.0 h1:O3MKe7d5jo1wpCdHftsOVi2xYFlu2T6+Hm/53u1fDNQ=
-github.com/open-telemetry/opentelemetry-collector-contrib/receiver/bigipreceiver v0.146.0/go.mod h1:zAAD/zXRf/nYoaHS9I6JdxApVhtVN7eCpJT/zJyNMI4=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.147.0 h1:Cg86slBQdU4nrRXOpm/GB0f9hQl0RKNzLiV2wAhWH7A=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.147.0/go.mod h1:vZNyLn2UFyDAUW8XhE8y4q5sm4NIZFpkTrK0AySa97k=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/chronyreceiver v0.147.0 h1:VkIyu1zTuGWF9pPzccAPiBrtvVETxgiq46gWlXmupXo=

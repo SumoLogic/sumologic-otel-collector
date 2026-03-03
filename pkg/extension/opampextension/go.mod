@@ -68,7 +68,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsfirehosereceiver v0.147.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver v0.147.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azureeventhubreceiver v0.147.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/bigipreceiver v0.146.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver v0.147.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/chronyreceiver v0.147.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/cloudflarereceiver v0.147.0
