@@ -163,7 +163,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [awsfirehosereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/awsfirehosereceiver
 [awsxrayreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/awsxrayreceiver
 [azureeventhubreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/azureeventhubreceiver
-[bigipreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/bigipreceiver
+[bigipreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.146.0/receiver/bigipreceiver
 [carbonreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/carbonreceiver
 [chronyreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/chronyreceiver
 [cloudfoundryreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.147.0/receiver/cloudfoundryreceiver
