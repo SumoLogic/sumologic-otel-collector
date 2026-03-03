@@ -48,12 +48,6 @@ using the image available in the one of the following repositories:
 
 ### Locally Manged Collector
 
-1. Set the release version variable:
-
-   ```bash
-   export RELEASE_VERSION=0.75.0-sumo-0
-   ```
-
 1. Prepare the configuration according to [this](configuration.md) document and save it in `config.yaml`.
 
    > **IMPORTANT NOTE**:
@@ -68,8 +62,10 @@ using the image available in the one of the following repositories:
 
     ```bash
     docker run --rm -ti --name sumologic-otel-collector \
+       --user 0:0 \
        -v "$(pwd)/config.yaml:/etc/otel/config.yaml" \
-       "public.ecr.aws/sumologic/sumologic-otel-collector:${RELEASE_VERSION}"
+       -v "$(pwd)/credentials:/etc/otel/.sumologic-otel-collector" \
+       "public.ecr.aws/sumologic/sumologic-otel-collector:latest"
     ```
 
 ### Important note about local state files when using `sumologicextension`
@@ -84,8 +80,8 @@ using the image available in the one of the following repositories:
 > registration), local directory (which is configured via `collector_credentials_directory`
 > in `sumologicextension`, and which is by default set to `$HOME/.sumologic-otel-collector`)
 > will be used to store the aforementioned state files.
-> Without any mounts defined on the container the collector will register itself
-> every time it starts up, creating clutter on Sumo Logic Collector Management page.
+> We are mounting the credentials directory to ensure persistence and prevent collector re-registration,
+> while running as root to provide the necessary permissions for host log and collector credentails access.
 >
 > In order to avoid that, use volume mounts or any other mechanism to mount
 > the collector credentials directory to the container to persist the state
@@ -100,12 +96,6 @@ using the image available in the one of the following repositories:
 
 ### Remotely Managed Collector
 
-1. Set the release version variable:
-
-   ```bash
-   export RELEASE_VERSION=0.75.0-sumo-0
-   ```
-
 1. Run the Sumo Logic Distribution for OpenTelemetry Collector in container, e.g.
 
    ```bash
@@ -113,10 +103,10 @@ using the image available in the one of the following repositories:
    --name sumologic-otel-collector \
    --user 0:0 \
    -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
-   -v "/var/lib/otelcol/file_storage:/var/lib/otelcol/file_storage" \
-   -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
+   -v /var/lib/otelcol-sumo/file_storage:/var/lib/otelcol-sumo/file_storage \
+   -v /var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials \
    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
-   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:${RELEASE_VERSION}" \
+   "public.ecr.aws/sumologic/sumologic-otel-collector-remote:latest" \
    --tag "host.group=default" \
    --tag "deployment.environment=default" \
    --opamp-api wss://opamp-events.sumologic.com/v1/opamp
