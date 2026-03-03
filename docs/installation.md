@@ -103,8 +103,8 @@ using the image available in the one of the following repositories:
    --name sumologic-otel-collector \
    --user 0:0 \
    -e SUMOLOGIC_INSTALLATION_TOKEN=<token> \
-   -v "/var/lib/otelcol-sumo/file_storage:/var/lib/otelcol-sumo/file_storage" \
-   -v "/var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials" \
+   -v /var/lib/otelcol-sumo/file_storage:/var/lib/otelcol-sumo/file_storage \
+   -v /var/lib/otelcol-sumo/credentials:/var/lib/otelcol-sumo/credentials \
    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
    "public.ecr.aws/sumologic/sumologic-otel-collector-remote:latest" \
    --tag "host.group=default" \
