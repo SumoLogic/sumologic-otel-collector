@@ -63,8 +63,8 @@ parse_version() {
     else
         echo "Error: version output does not match required regex: '${output}'" >&2
         echo "Binary path: ${binary_path}" >&2
-        echo "Binary exists: $(test -f ${binary_path} && echo 'yes' || echo 'no')" >&2
-        echo "Binary executable: $(test -x ${binary_path} && echo 'yes' || echo 'no')" >&2
+        echo "Binary exists: $(test -f "${binary_path}" && echo 'yes' || echo 'no')" >&2
+        echo "Binary executable: $(test -x "${binary_path}" && echo 'yes' || echo 'no')" >&2
         ls -la "${binary_path}" >&2 || echo "Cannot list binary" >&2
         exit 1
     fi
