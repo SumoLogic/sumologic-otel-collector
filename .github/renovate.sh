@@ -32,7 +32,7 @@ if [[ -n "$FROM_VERSION_FIXED" ]]; then
 else
   FROM_VERSIONS=$(grep -ho 'tree/v[0-9.]\+' docs/configuration.md | sed 's/tree\/v//' | sort -u | tr '\n' ' ')
 fi
-TO_VER=${TO_VERSIONS[0]}
+TO_VER=$(echo "$TO_VERSIONS" | head -1)
 echo "Initial versions: $FROM_VERSIONS, changing to: $TO_VER."
 
 for FROM_VER in $FROM_VERSIONS; do
