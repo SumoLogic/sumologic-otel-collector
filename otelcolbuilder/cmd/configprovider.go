@@ -24,7 +24,6 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
-	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
@@ -35,12 +34,6 @@ import (
 // https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
-	// feature flags, which are enabled by default in our distro
-	err := featuregate.GlobalRegistry().Set("extension.sumologic.updateCollectorMetadata", true)
-
-	if err != nil {
-		return fmt.Errorf("setting feature gate flags failed: %s", err)
-	}
 	// we need to check if any config locations have been set alongside the opamp config
 	flagset := flags()
 
@@ -50,7 +43,7 @@ func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
 	flagset.SetOutput(io.Discard)
 
 	// actually parse the flags and get the config locations
-	err = flagset.Parse(os.Args[1:])
+	err := flagset.Parse(os.Args[1:])
 	if err != nil {
 		// if we fail parsing, we just let the actual command logic deal with it
 		// here we only care about config locations

@@ -51,7 +51,7 @@ parse_params() {
 parse_version() {
     binary_path="$1"
 
-    output="$(${binary_path} --version)"
+    output="$(${binary_path} --version 2>&1)"
 
     regex="otelcol-sumo version v?([0-9]+)\.([0-9]+)\.([0-9]+)\-sumo\-([0-9]+).*"
 
@@ -61,7 +61,11 @@ parse_version() {
         patch_version="${BASH_REMATCH[3]}"
         sumo_version="${BASH_REMATCH[4]}"
     else
-        echo "Error: version output does not match required regex: ${output}" >&2
+        echo "Error: version output does not match required regex: '${output}'" >&2
+        echo "Binary path: ${binary_path}" >&2
+        echo "Binary exists: $(test -f "${binary_path}" && echo 'yes' || echo 'no')" >&2
+        echo "Binary executable: $(test -x "${binary_path}" && echo 'yes' || echo 'no')" >&2
+        ls -la "${binary_path}" >&2 || echo "Cannot list binary" >&2
         exit 1
     fi
 }

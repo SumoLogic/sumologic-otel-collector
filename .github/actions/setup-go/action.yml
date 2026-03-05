@@ -143,7 +143,7 @@ runs:
 
     - name: Setup Go (Official distribution)
       if: inputs.distribution != 'microsoft'
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version: ${{ inputs.version }}
         cache: false
