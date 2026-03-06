@@ -76,7 +76,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsfirehosereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azureeventhubreceiver"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/bigipreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/chronyreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/cloudflarereceiver"
@@ -218,7 +217,6 @@ func Components() (
 		activedirectorydsreceiver.NewFactory(),
 		aerospikereceiver.NewFactory(),
 		azureeventhubreceiver.NewFactory(),
-		bigipreceiver.NewFactory(),
 		carbonreceiver.NewFactory(),
 		chronyreceiver.NewFactory(),
 		cloudflarereceiver.NewFactory(),
