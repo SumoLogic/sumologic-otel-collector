@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.147.0-sumo-0]
+
+### Released 2026-03-06
+
+### Changed
+
+- chore: bump otel version [#1994]
+- chore: remove bigIP receiver (removed from upstream) [#1995]
+
+[#1994]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1994
+[#1995]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1995
+[v0.147.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.147.0-sumo-0
+
 ## [v0.146.0-sumo-0]
 
 ### Released 2026-02-25
@@ -22,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1967]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1967
 [#1970]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1970
 [#1981]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1981
-
 [v0.146.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.146.0-sumo-0
 
 ## [v0.145.0-sumo-0]
@@ -46,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1952]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1952
 [#1957]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1957
 [#1960]: https://github.com/SumoLogic/sumologic-otel-collector/pull/1960
-
 [v0.145.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.145.0-sumo-0
 
 ## [v0.144.0-sumo-0]
