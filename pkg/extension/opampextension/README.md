@@ -138,7 +138,6 @@ This section lists the components that are included in the sumologic opamp exten
 |   activedirectoryds    |                      |               |                      |            |
 |       aerospike        |                      |               |                      |            |
 |     azureeventhub      |                      |               |                      |            |
-|         bigip          |                      |               |                      |            |
 |        carbonr         |                      |               |                      |            |
 |         chrony         |                      |               |                      |            |
 |       cloudflare       |                      |               |                      |            |
