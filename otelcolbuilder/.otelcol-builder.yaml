@@ -222,6 +222,6 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
   # CHANGED: replace windowseventlogreceiver with fork branch
-  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.0.0-20260309055931-b6ae26284e34
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/pkg/stanza v0.0.0-20260309055931-b6ae26284e34
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.0.0-20260309065951-e61188b6ccbd
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/pkg/stanza v0.0.0-20260309065951-e61188b6ccbd
 
