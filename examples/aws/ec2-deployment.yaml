@@ -203,7 +203,7 @@ Resources:
               Service: ec2.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
-        - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/${IAMPolicy}'
+        - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${IAMPolicy}'
       RoleName: !Ref IAMRole
     DependsOn: EC2Policy
 
