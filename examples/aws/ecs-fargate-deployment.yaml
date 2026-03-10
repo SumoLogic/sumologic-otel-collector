@@ -39,8 +39,8 @@ Resources:
     Type: 'AWS::ECS::TaskDefinition'
     Properties:
       Family: sumologic-otel-collector-fargate
-      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${IAMTaskRole}'
-      ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${IAMExecutionRole}'
+      TaskRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${IAMTaskRole}'
+      ExecutionRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${IAMExecutionRole}'
       NetworkMode: awsvpc
       ContainerDefinitions:
         - LogConfiguration:
@@ -124,7 +124,7 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
-        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
-        - 'arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMReadOnlyAccess'
       RoleName: !Ref IAMExecutionRole
