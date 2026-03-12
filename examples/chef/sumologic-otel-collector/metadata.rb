@@ -6,3 +6,6 @@ description 'Installs sumologic-otel-collector'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version '0.0.0'
 chef_version '>= 11' if respond_to?(:chef_version)
+
+# Optional gem for Chef Vault support
+gem 'chef-vault', '~> 4.0'
