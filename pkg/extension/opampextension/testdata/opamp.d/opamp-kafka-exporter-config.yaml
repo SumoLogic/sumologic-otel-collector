@@ -5,7 +5,6 @@ receivers:
       http:
 exporters:
   kafka:
-    topic: spans
     brokers:
       - "foo:123"
       - "bar:456"
