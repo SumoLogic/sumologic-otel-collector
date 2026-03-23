@@ -28,10 +28,6 @@ exporters:
     metrics:
     logs:
       topic_from_metadata_key: metadata_key
-  kafka/legacy_encoding:
-    encoding: legacy_encoding
-    metrics:
-      encoding: metrics_encoding
 service:
   pipelines:
     metrics/kafka/abcdef01-2345-6789-abcd-ef0123456789:
@@ -40,4 +36,3 @@ service:
       exporters:
         - kafka
         - kafka/legacy_topic
-        - kafka/legacy_encoding
