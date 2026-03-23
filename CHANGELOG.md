@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.148.0-sumo-0]
+
+No significant changes.
+
+[v0.148.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.148.0-sumo-0
+
 ## [v0.147.0-sumo-0]
 
 ### Released 2026-03-06
