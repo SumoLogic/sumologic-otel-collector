@@ -53,26 +53,6 @@ exporters:
       encoding: per_signal_encoding
     profiles:
       encoding: per_signal_encoding
-  kafka/metadata_batch_valid:
-    include_metadata_keys:
-      - metadata_key
-    logs:
-      topic_from_metadata_key: kafka_topic
-    metrics:
-      topic_from_metadata_key: kafka_topic
-    traces:
-      topic_from_metadata_key: kafka_topic
-    profiles:
-      topic_from_metadata_key: kafka_topic
-    sending_queue:
-      enabled: true
-      batch:
-        sizer: bytes
-        partition:
-          metadata_keys:
-            - metadata_key
-            - another_key
-            - kafka_topic
 service:
   pipelines:
     metrics/kafka/abcdef01-2345-6789-abcd-ef0123456789:
@@ -82,4 +62,3 @@ service:
         - kafka
         - kafka/per_signal_topic
         - kafka/per_signal_encoding
-        - kafka/metadata_batch_valid
