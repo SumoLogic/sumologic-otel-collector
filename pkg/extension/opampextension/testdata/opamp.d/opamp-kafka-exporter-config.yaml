@@ -25,9 +25,7 @@ exporters:
       max_interval: 60s
       max_elapsed_time: 10m
   kafka/legacy_topic:
-    topic: legacy_topic
     metrics:
-      topic: metrics_topic
     logs:
       topic_from_metadata_key: metadata_key
   kafka/legacy_encoding:
