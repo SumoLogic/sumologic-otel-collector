@@ -1,0 +1,1 @@
+chore: Mark k8s_tagger as deprecated in favour of k8sattributes processor
