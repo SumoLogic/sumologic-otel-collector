@@ -2,8 +2,8 @@
 
 **Stability level**: Beta
 
-> **Deprecated**  
-> The `k8sprocessor` is deprecated and will be removed in a future release.  
+> **Deprecated**
+> The `k8sprocessor` is deprecated and will be removed in a future release.
 > Please migrate to the [k8sattributes][k8sattributes-processor] processor.
 
 The `k8sprocessor` automatically tags logs, metrics and traces with Kubernetes metadata
