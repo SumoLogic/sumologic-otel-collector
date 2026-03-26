@@ -2,6 +2,10 @@
 
 **Stability level**: Beta
 
+> **Deprecated**  
+> The `k8sprocessor` is deprecated and will be removed in a future release.  
+> Please migrate to the [k8sattributes][k8sattributes-processor] processor.
+
 The `k8sprocessor` automatically tags logs, metrics and traces with Kubernetes metadata
 like pod name, namespace name etc.
 
@@ -10,6 +14,8 @@ metadata to the records. The processor uses the Kubernetes API to discover all p
 in a cluster, keeps a record of their IP addresses and interesting metadata. Upon receiving records,
 the processor tries to identify the pod that sent the record and matches
 it with the in-memory data. If a match is found, the cached metadata is added to the record as attributes.
+
+[k8sattributes-processor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/k8sattributesprocessor
 
 ## Configuration
 
