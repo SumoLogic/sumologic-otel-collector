@@ -39,7 +39,7 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/antchfx/jsonquery v1.3.3 // indirect
 	github.com/antchfx/xmlquery v1.4.0 // indirect
-	github.com/antchfx/xpath v1.3.1 // indirect
+	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apache/arrow/go/v16 v16.0.0-20240319161736-1ee3da0064a0 // indirect
 	github.com/apache/thrift v0.19.0 // indirect
