@@ -64,8 +64,12 @@ PR_NUMBER=$(gh pr list --repo SumoLogic/sumologic-otel-collector --state open \
     --json number --jq '.[0].number' 2>/dev/null || true)
 if [[ -n "$PR_NUMBER" ]]; then
     CHANGELOG_FILE=".changelog/${PR_NUMBER}.changed.txt"
-    echo "chore: upgrade core and contrib to ${TO_VER}" > "${CHANGELOG_FILE}"
-    echo "Created changelog entry: ${CHANGELOG_FILE}"
+    if [[ -e "${CHANGELOG_FILE}" ]]; then
+        echo "Changelog entry already exists, not overwriting: ${CHANGELOG_FILE}"
+    else
+        echo "chore: upgrade core and contrib to ${TO_VER}" > "${CHANGELOG_FILE}"
+        echo "Created changelog entry: ${CHANGELOG_FILE}"
+    fi
 else
     echo "Warning: Could not determine PR number; skipping changelog entry creation."
 fi
