@@ -60,9 +60,6 @@
       check_interval: 5s
       limit_percentage: 75
       spike_limit_percentage: 20
-    batch:
-      send_batch_size: 1_024
-      timeout: 1s
     resourcedetection/system:
       detectors: ["system"]
       system:
@@ -110,7 +107,6 @@
         processors:
           - memory_limiter
           - resourcedetection/system
-          - batch
           - resource/metrics/1278d323-eabc-4061-a62d-db5e7dd6ca25
           - resource/1278d323-eabc-4061-a62d-db5e7dd6ca25
         exporters:
@@ -123,7 +119,6 @@
         processors:
           - memory_limiter
           - resourcedetection/system
-          - batch
           - resource/1278d323-eabc-4061-a62d-db5e7dd6ca25
         exporters:
           - sumologic

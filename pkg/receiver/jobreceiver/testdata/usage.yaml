@@ -74,9 +74,6 @@ processors:
     check_interval: 5s
     limit_percentage: 75
     spike_limit_percentage: 20
-  batch:
-    send_batch_size: 1_024
-    timeout: 1s
 
   resourcedetection/system:
     detectors: ["system"]
@@ -91,7 +88,6 @@ service:
         - monitoringjob/log
       processors:
         - memory_limiter
-        - batch
         - resourcedetection/system
       exporters:
         - debug
