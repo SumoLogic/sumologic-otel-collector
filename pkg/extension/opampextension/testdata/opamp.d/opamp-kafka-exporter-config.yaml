@@ -5,7 +5,14 @@ receivers:
       http:
 exporters:
   kafka:
-    topic: spans
+    logs:
+      topic: spans
+    metrics:
+      topic: spans
+    traces:
+      topic: spans
+    profiles:
+      topic: spans
     brokers:
       - "foo:123"
       - "bar:456"
@@ -25,16 +32,27 @@ exporters:
       initial_interval: 10s
       max_interval: 60s
       max_elapsed_time: 10m
-  kafka/legacy_topic:
-    topic: legacy_topic
+  kafka/per_signal_topic:
+    include_metadata_keys:
+      - metadata_key
+    logs:
+      topic: per_signal_topic
+      topic_from_metadata_key: metadata_key
     metrics:
       topic: metrics_topic
+    traces:
+      topic: per_signal_topic
+    profiles:
+      topic: per_signal_topic
+  kafka/per_signal_encoding:
     logs:
-      topic_from_metadata_key: metadata_key
-  kafka/legacy_encoding:
-    encoding: legacy_encoding
+      encoding: per_signal_encoding
     metrics:
       encoding: metrics_encoding
+    traces:
+      encoding: per_signal_encoding
+    profiles:
+      encoding: per_signal_encoding
 service:
   pipelines:
     metrics/kafka/abcdef01-2345-6789-abcd-ef0123456789:
@@ -42,5 +60,5 @@ service:
         - otlp
       exporters:
         - kafka
-        - kafka/legacy_topic
-        - kafka/legacy_encoding
+        - kafka/per_signal_topic
+        - kafka/per_signal_encoding
