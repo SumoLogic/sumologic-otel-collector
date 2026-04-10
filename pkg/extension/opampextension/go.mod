@@ -110,6 +110,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/podmanreceiver v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/postgresqlreceiver v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.149.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusremotewritereceiver v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/pulsarreceiver v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/purefareceiver v0.149.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/purefbreceiver v0.149.0
