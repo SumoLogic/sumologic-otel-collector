@@ -2,6 +2,45 @@
 
 **Stability level**: Beta
 
+> **Deprecated**
+> The `telegrafreceiver` is deprecated and will be removed in a future release. Please migrate to direct otel receivers instead of telegraf plugins. If you still want to use telegraf plugin, you can setup a standalone telegraf and forward metrics to sumo otel collector using otlp/http output plugin in telegraf.
+>
+> Example standalone Telegraf configuration with OTLP output:
+>
+> ```toml
+> [agent]
+>   interval = "30s"
+>   flush_interval = "30s"
+>
+> [[inputs.cpu]]
+>   percpu = true
+>   totalcpu = true
+>
+> [[inputs.mem]]
+>
+> [[outputs.opentelemetry]]
+>   service_address = "localhost:4317"
+> ```
+>
+> Then configure the OTel Collector with an `otlp` receiver:
+>
+> ```yaml
+> receivers:
+>   otlp:
+>     protocols:
+>       grpc:
+>         endpoint: 0.0.0.0:4317
+>
+> service:
+>   pipelines:
+>     metrics:
+>       receivers: [otlp]
+>       processors: [batch]
+>       exporters: [sumologic]
+> ```
+
+[prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusremotewritereceiver
+
 Telegraf receiver for ingesting metrics from various [input plugins][input_plugins]
 into otc pipeline.
 
