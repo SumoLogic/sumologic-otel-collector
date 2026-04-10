@@ -99,7 +99,7 @@ provider must be used in order to load the stored configuration, for example:
 
 ## Components
 
-This section lists the components that are included in the sumologic opamp extension for OpenTelemetry Collector.
+This section lists the components supported for remote configuration validation in the OpAMP extension. When a remote configuration is received from the OpAMP server, it is validated against these component factories before being persisted to disk. If a configuration references a component not listed here, validation will fail and the configuration will be rejected.
 
 |       Receivers        |      Processors      |   Exporters   |      Extensions      | Connectors |
 | :--------------------: | :------------------: | :-----------: | :------------------: | :--------: |
@@ -163,6 +163,7 @@ This section lists the components that are included in the sumologic opamp exten
 |         podman         |                      |               |                      |            |
 |    simpleprometheus    |                      |               |                      |            |
 |       prometheus       |                      |               |                      |            |
+| prometheusremotewrite  |                      |               |                      |            |
 |         pulsar         |                      |               |                      |            |
 |         purefa         |                      |               |                      |            |
 |         purefb         |                      |               |                      |            |

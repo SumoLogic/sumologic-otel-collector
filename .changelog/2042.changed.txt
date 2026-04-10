@@ -1,0 +1,1 @@
+feat: deprecate telegraf receiver and add prometheusremotewrite receiver

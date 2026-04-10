@@ -108,6 +108,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |             [postgresql][postgresqlreceiver]             |                                                              |                                        |                                             |                                     |
 |      [prometheus_simple][simpleprometheusreceiver]       |                                                              |                                        |                                             |                                     |
 |             [prometheus][prometheusreceiver]             |                                                              |                                        |                                             |                                     |
+|  [prometheusremotewrite][prometheusremotewritereceiver]  |                                                              |                                        |                                             |                                     |
 |                 [pulsar][pulsarreceiver]                 |                                                              |                                        |                                             |                                     |
 |                 [purefa][purefareceiver]                 |                                                              |                                        |                                             |                                     |
 |                 [purefb][purefbreceiver]                 |                                                              |                                        |                                             |                                     |
@@ -129,7 +130,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                 [statsd][statsdreceiver]                 |                                                              |                                        |                                             |                                     |
 |                 [syslog][syslogreceiver]                 |                                                              |                                        |                                             |                                     |
 |                 [tcplog][tcplogreceiver]                 |                                                              |                                        |                                             |                                     |
-|              [`telegraf`][telegrafreceiver]              |                                                              |                                        |                                             |                                     |
+|          ~~[`telegraf`][telegrafreceiver]~~              |                                                              |                                        |                                             |                                     |
 |                 [udplog][udplogreceiver]                 |                                                              |                                        |                                             |                                     |
 |                [vcenter][vcenterreceiver]                |                                                              |                                        |                                             |                                     |
 |              [wavefront][wavefrontreceiver]              |                                                              |                                        |                                             |                                     |
@@ -208,6 +209,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [postgresqlreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/postgresqlreceiver
 [simpleprometheusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/simpleprometheusreceiver
 [prometheusreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/prometheusreceiver
+[prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/prometheusremotewritereceiver
 [pulsarreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/pulsarreceiver
 [purefareceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/purefareceiver
 [purefbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/purefbreceiver
