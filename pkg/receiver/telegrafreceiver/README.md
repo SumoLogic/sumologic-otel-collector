@@ -39,8 +39,6 @@
 >       exporters: [sumologic]
 > ```
 
-[prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusremotewritereceiver
-
 Telegraf receiver for ingesting metrics from various [input plugins][input_plugins]
 into otc pipeline.
 
