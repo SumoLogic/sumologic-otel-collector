@@ -38,6 +38,62 @@
 >       processors: [batch]
 >       exporters: [sumologic]
 > ```
+>
+> ## Migrating from Telegraf `http_listener_v2` to `prometheus_remote_write` receiver
+>
+> If you were using the Telegraf receiver with the `http_listener_v2` input plugin
+> to accept Prometheus remote write metrics, you can migrate to the native
+> `prometheus_remote_write` receiver.
+>
+> **Before (telegrafreceiver with http_listener_v2):**
+>
+> ```yaml
+> receivers:
+>   telegraf:
+>     agent_config: |
+>       [agent]
+>         interval = "30s"
+>         flush_interval = "30s"
+>       [[inputs.http_listener_v2]]
+>         service_address = ":9090"
+>         paths = ["/api/v1/write"]
+>         data_format = "prometheusremotewrite"
+>
+> service:
+>   pipelines:
+>     metrics:
+>       receivers: [telegraf]
+>       processors: [batch]
+>       exporters: [sumologic]
+> ```
+>
+> **After (prometheus_remote_write receiver):**
+>
+> ```yaml
+> receivers:
+>   prometheus_remote_write:
+>     endpoint: 0.0.0.0:9090
+>
+> service:
+>   pipelines:
+>     metrics:
+>       receivers: [prometheus_remote_write]
+>       processors: [batch]
+>       exporters: [sumologic]
+> ```
+>
+> The `prometheus_remote_write` receiver listens on `/api/v1/write` by default.
+> Configure Prometheus to send to the collector:
+>
+> ```yaml
+> remote_write:
+>   - url: "http://<collector-host>:9090/api/v1/write"
+> ```
+>
+> **Note:** The `prometheus_remote_write` receiver is currently in **Alpha** stability and only supports metrics.
+> Refer to the [upstream documentation][prometheusremotewritereceiver] for full configuration options and known limitations.
+>
+> [prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/prometheusremotewritereceiver
 
 Telegraf receiver for ingesting metrics from various [input plugins][input_plugins]
 into otc pipeline.
