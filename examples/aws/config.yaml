@@ -12,11 +12,6 @@ processors:
       check_interval: 1s
       limit_percentage: 80
       spike_limit_percentage: 20
-  batch/traces:
-    timeout: 1s
-    send_batch_size: 256
-  batch/metrics:
-    timeout: 60s
   resourcedetection:
     detectors: [env, ec2, ecs]
     timeout: 5s
@@ -29,9 +24,9 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, resourcedetection, batch/traces]
+      processors: [memory_limiter, resourcedetection]
       exporters: [otlphttp]
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, resourcedetection, batch/metrics]
+      processors: [memory_limiter, resourcedetection]
       exporters: [otlphttp]
