@@ -287,7 +287,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/xray v1.36.21 // indirect
 	github.com/aws/smithy-go v1.24.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/basgys/goxml2json v1.1.1-0.20231018121955-e66ee54ceaad // indirect
 	github.com/bboreham/go-loser v0.0.0-20230920113527-fcc2c21820a3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.12.0 // indirect
@@ -315,7 +314,6 @@ require (
 	github.com/digitalocean/go-metadata v0.0.0-20250129100319-e3650a3df44b // indirect
 	github.com/digitalocean/godo v1.178.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.5.2+incompatible // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -493,7 +491,6 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nginx/nginx-prometheus-exporter v1.5.1 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/ackextension v0.150.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding v0.150.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/encoding/awscloudwatchmetricstreamsencodingextension v0.150.0 // indirect
@@ -566,7 +563,6 @@ require (
 	github.com/paulmach/orb v0.12.0 // indirect
 	github.com/pb33f/jsonpath v0.8.2 // indirect
 	github.com/pb33f/libopenapi v0.34.4 // indirect
-	github.com/pb33f/libopenapi-validator v0.13.3 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
@@ -594,7 +590,6 @@ require (
 	github.com/relvacode/iso8601 v1.7.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rs/cors v1.11.1 // indirect
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
@@ -632,7 +627,6 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0 // indirect
 	github.com/vmware/go-vmware-nsxt v0.0.0-20230223012718-d31b8a1ca05e // indirect
 	github.com/vmware/govmomi v0.53.0 // indirect
-	github.com/vultr/govultr/v2 v2.17.2 // indirect
 	github.com/vultr/govultr/v3 v3.28.1 // indirect
 	github.com/wadey/gocovmerge v0.0.0-20160331181800-b5bfa59ec0ad // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -645,7 +639,6 @@ require (
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
 	go.mongodb.org/atlas v0.38.0 // indirect
-	go.mongodb.org/mongo-driver v1.17.6 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.3.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
