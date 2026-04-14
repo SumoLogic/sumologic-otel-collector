@@ -93,7 +93,7 @@
 > **Note:** The `prometheus_remote_write` receiver is currently in **Alpha** stability and only supports metrics.
 > Refer to the [upstream documentation][prometheusremotewritereceiver] for full configuration options and known limitations.
 >
-> [prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/receiver/prometheusremotewritereceiver
+> [prometheusremotewritereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/receiver/prometheusremotewritereceiver
 
 Telegraf receiver for ingesting metrics from various [input plugins][input_plugins]
 into otc pipeline.
@@ -352,4 +352,4 @@ service:
 
 [prometheus_data_model]: https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
 [sumologic_output_plugin]: https://github.com/influxdata/telegraf/tree/master/plugins/outputs/sumologic
-[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.149.0/processor/metricstransformprocessor
+[metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/metricstransformprocessor
