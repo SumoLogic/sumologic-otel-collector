@@ -9,7 +9,7 @@ updates:
       - skip-changelog
 
   - package-ecosystem: "gomod"
-    directory: "/pkg"
+    directory: "/pkg/**"
     schedule:
       interval: "daily"
 
