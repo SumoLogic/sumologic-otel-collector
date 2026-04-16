@@ -166,6 +166,7 @@ extensions:
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.150.0
+  - gomod: go.opentelemetry.io/collector/extension/memorylimiterextension v0.150.0
   # Upstream extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/asapauthextension v0.150.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/awsproxy v0.150.0
