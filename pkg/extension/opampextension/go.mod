@@ -158,6 +158,7 @@ require (
 	go.opentelemetry.io/collector/exporter/otlphttpexporter v0.150.0
 	go.opentelemetry.io/collector/extension v1.56.0
 	go.opentelemetry.io/collector/extension/extensiontest v0.150.0
+	go.opentelemetry.io/collector/extension/memorylimiterextension v0.150.0
 	go.opentelemetry.io/collector/extension/zpagesextension v0.150.0
 	go.opentelemetry.io/collector/otelcol v0.150.0
 	go.opentelemetry.io/collector/pdata v1.56.0

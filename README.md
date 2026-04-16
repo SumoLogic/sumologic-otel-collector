@@ -75,7 +75,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                 [expvar][expvarreceiver]                 |                   [geoip][geoipprocessor]                    |                                        |      [`sumologic`][sumologicextension]      |                                     |
 |                [filelog][filelogreceiver]                |                  [schema][schemaprocessor]                   |                                        |          [zpages][zpagesextension]          |                                     |
 |              [filestats][filestatsreceiver]              |                 [`source`][sourceprocessor]                  |                                        |    [textencoding][textencodingextension]    |                                     |
-|           [flinkmetrics][flinkmetricsreceiver]           |                    [span][spanprocessor]                     |                                        |                                             |                                     |
+|           [flinkmetrics][flinkmetricsreceiver]           |                    [span][spanprocessor]                     |                                        |   [memorylimiter][memorylimiterextension]   |                                     |
 |          [fluentforward][fluentforwardreceiver]          |                                                              |                                        |                                             |                                     |
 |      [googlecloudpubsub][googlecloudpubsubreceiver]      |               [sumologic][sumologicprocessor]                |                                        |                                             |                                     |
 |     [googlecloudspanner][googlecloudspannerreceiver]     |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                             |                                     |
@@ -252,7 +252,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [k8sattributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/k8sattributesprocessor
 [logdedupprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/logdedupprocessor
 [logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/logstransformprocessor
-[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/processor/memorylimiterprocessor
+[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/memorylimiterextension
 [metricfrequencyprocessor]: ./pkg/processor/metricfrequencyprocessor
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/metricstransformprocessor
 [probabilisticsamplerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/probabilisticsamplerprocessor
@@ -300,6 +300,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/extension/sumologicextension
 [zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/extension/zpagesextension
 [textencodingextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/extension/encoding/textencodingextension
+[memorylimiterextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/extension/encoding/textencodingextension
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/connector/countconnector
 [failoverconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/connector/failoverconnector
