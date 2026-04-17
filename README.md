@@ -252,7 +252,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [k8sattributesprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/k8sattributesprocessor
 [logdedupprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/logdedupprocessor
 [logstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/logstransformprocessor
-[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/memorylimiterextension
+[memorylimiterprocessor]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/processor/memorylimiterprocessor
 [metricfrequencyprocessor]: ./pkg/processor/metricfrequencyprocessor
 [metricstransformprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/metricstransformprocessor
 [probabilisticsamplerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/probabilisticsamplerprocessor
