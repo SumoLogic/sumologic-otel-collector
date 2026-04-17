@@ -639,10 +639,6 @@ processors:
   memory_limiter:
     check_interval: 5s
     limit_mib: 2048
-  batch:
-    send_batch_size: 512
-    send_batch_max_size: 512
-    timeout: 5s
   resourcedetection:
     detectors: ["ec2"]
     override: false
@@ -893,6 +889,5 @@ service:
         - sumologic/1
       processors:
         - memory_limiter
-        - batch
         - resourcedetection
         - groupbyattrs/sumologic

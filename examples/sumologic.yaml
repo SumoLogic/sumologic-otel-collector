@@ -67,15 +67,6 @@ processors:
     ## Spike limit (calculated from available memory). Must be less than limit_percentage.
     spike_limit_percentage: 20
 
-  ## Configuration for Batch Processor
-  ## The batch processor accepts records and places them into batches grouped by node and resource
-  ## ref: https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/batchprocessor
-  batch:
-    ## Number of records after which a batch will be sent regardless of time
-    send_batch_size: 1_024
-    ## Time duration after which a batch will be sent regardless of size
-    timeout: 1s
-
   ## Configuration for Sumo Logic Schema Processor
   ## The Sumo Logic Schema processor modifies the metadata on logs, metrics and traces sent to Sumo Logic
   ## so that the Sumo Logic apps can make full use of the ingested data.
@@ -105,7 +96,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-        - batch
         - sumologic
       exporters:
         - sumologic
@@ -114,7 +104,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-        - batch
         - sumologic
       exporters:
         - sumologic
@@ -123,7 +112,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-        - batch
         - sumologic
       exporters:
         - sumologic
