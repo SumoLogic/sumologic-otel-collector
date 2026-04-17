@@ -1,6 +1,6 @@
 # Sumo Logic Distribution for OpenTelemetry Collector
 
-[![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)
+[![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)&nbsp;&nbsp;
 [![E2E Status](https://img.shields.io/github/actions/workflow/status/SumoLogic/sumologic-otel-collector/trigger-jenkins-e2e.yml?branch=main&label=E2E%20Status)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/trigger-jenkins-e2e.yml)
 
 Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
