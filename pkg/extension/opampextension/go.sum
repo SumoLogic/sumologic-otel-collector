@@ -1737,6 +1737,7 @@ go.opentelemetry.io/collector/extension/extensionmiddleware/extensionmiddlewaret
 go.opentelemetry.io/collector/extension/extensionmiddleware/extensionmiddlewaretest v0.150.0/go.mod h1:WIMRtfNZ8bTWGd4dLc366pmKGZeDn5zmPwPqavjPJms=
 go.opentelemetry.io/collector/extension/extensiontest v0.150.0 h1:NcdUa4j2wFF2pAHHkxrArpUGKp3HrkSF+W36zkle1n4=
 go.opentelemetry.io/collector/extension/extensiontest v0.150.0/go.mod h1:XkwVtWA6tQPbm7Yhu3MZNg83k1qDMVd8YZFaEDQSf1o=
+go.opentelemetry.io/collector/extension/memorylimiterextension v0.150.0 h1:EwH9oive5JOm4wF6LGZw3Woyk2TbN2atiOcFgmUwV/Y=
 go.opentelemetry.io/collector/extension/memorylimiterextension v0.150.0/go.mod h1:z2VdwMwGm3DxsMt5UnPdr8wby0s6gU3bTYpa69T+1zM=
 go.opentelemetry.io/collector/extension/xextension v0.150.0 h1:2dp+732ctXR5EZOD/qVjNqf43Y1uwKaGXHTDFHpSWP4=
 go.opentelemetry.io/collector/extension/xextension v0.150.0/go.mod h1:4j63nieN77xkax46IhQ+HVyRbJ8RJ7D1Sv4GJwoDHwc=
