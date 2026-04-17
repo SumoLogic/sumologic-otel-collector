@@ -274,6 +274,7 @@ jobs:
     with:
       go-version: ${{ needs.determine-build-info.outputs.go-version }}
       version: ${{ needs.determine-build-info.outputs.version-with-sha }}
+      signing-enabled: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     secrets: inherit
 
   build-otelcol-config:
@@ -283,4 +284,5 @@ jobs:
       - determine-build-info
     with:
       go-version: ${{ needs.determine-build-info.outputs.go-version }}
+      signing-enabled: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     secrets: inherit
