@@ -9,21 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.150.0-sumo-0]
 
-### Released 2026-04-17
+### Released 2026-04-20
 
 ### Changed
 
 - chore: add changelog file creation logic to renovate.sh [#2018]
 - feat: deprecate telegraf receiver and add prometheusremotewrite receiver [#2042]
 - chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.149.0 to v0.150.0 [#2049]
-- feat: add and enable memorylimiterextension [#2051]
 - chore: enable domainControllers.autodiscovery feature gate by default [#2052]
+- feat: add and enable memorylimiterextension [#2053]
 
 [#2018]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2018
 [#2042]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2042
 [#2049]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2049
-[#2051]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2051
 [#2052]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2052
+[#2053]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2053
 [v0.150.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.150.0-sumo-0
 
 ## [v0.149.0-sumo-0]
