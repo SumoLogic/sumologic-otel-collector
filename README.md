@@ -76,7 +76,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                 [expvar][expvarreceiver]                 |                   [geoip][geoipprocessor]                    |                                        |      [`sumologic`][sumologicextension]      |                                     |
 |                [filelog][filelogreceiver]                |                  [schema][schemaprocessor]                   |                                        |          [zpages][zpagesextension]          |                                     |
 |              [filestats][filestatsreceiver]              |                 [`source`][sourceprocessor]                  |                                        |    [textencoding][textencodingextension]    |                                     |
-|           [flinkmetrics][flinkmetricsreceiver]           |                    [span][spanprocessor]                     |                                        |                                             |                                     |
+|           [flinkmetrics][flinkmetricsreceiver]           |                    [span][spanprocessor]                     |                                        |   [memorylimiter][memorylimiterextension]   |                                     |
 |          [fluentforward][fluentforwardreceiver]          |                                                              |                                        |                                             |                                     |
 |      [googlecloudpubsub][googlecloudpubsubreceiver]      |               [sumologic][sumologicprocessor]                |                                        |                                             |                                     |
 |     [googlecloudspanner][googlecloudspannerreceiver]     |        [`sumologic_syslog`][sumologicsyslogprocessor]        |                                        |                                             |                                     |
@@ -301,6 +301,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [sumologicextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/extension/sumologicextension
 [zpagesextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/extension/zpagesextension
 [textencodingextension]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/extension/encoding/textencodingextension
+[memorylimiterextension]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/extension/memorylimiterextension
 [forwardconnector]: https://github.com/open-telemetry/opentelemetry-collector/tree/v0.150.0/connector/forwardconnector
 [countconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/connector/countconnector
 [failoverconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/connector/failoverconnector
