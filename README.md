@@ -3,13 +3,12 @@
 [![Default branch build](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml/badge.svg)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/dev_builds.yml)&nbsp;&nbsp;
 [![E2E Status](https://img.shields.io/github/actions/workflow/status/SumoLogic/sumologic-otel-collector/trigger-jenkins-e2e.yml?branch=main&label=E2E%20Status)](https://github.com/SumoLogic/sumologic-otel-collector/actions/workflows/trigger-jenkins-e2e.yml)
 
-
 Sumo Logic Distribution for OpenTelemetry Collector is a Sumo Logic-supported distribution of the [OpenTelemetry Collector][otc_link].
 It is a single agent to send logs, metrics and traces to [Sumo Logic][sumologic].
 
 **Our aim is to extend and not to replace the OpenTelemetry Collector.**
 
-In order to learn more, please see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose]
+In order to learn more, please see [purpose of Sumo Logic Distribution for OpenTelemetry Collector][purpose].
 
 - Installation
   - [Linux][linux_installation]
@@ -314,3 +313,4 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/geoipprocessor
 [unrollprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/unrollprocessor
 [lookupprocessor]:./pkg/processor/lookupprocessor
+
