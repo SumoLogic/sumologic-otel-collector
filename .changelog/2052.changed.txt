@@ -1,1 +1,0 @@
-chore: enable domainControllers.autodiscovery feature gate by default
