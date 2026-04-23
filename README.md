@@ -313,4 +313,3 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.150.0/processor/geoipprocessor
 [unrollprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/unrollprocessor
 [lookupprocessor]:./pkg/processor/lookupprocessor
-
