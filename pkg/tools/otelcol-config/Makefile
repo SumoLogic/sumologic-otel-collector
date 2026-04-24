@@ -55,18 +55,14 @@ endif
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying
 # the build
 ifeq ($(FIPS_SUFFIX),"")
-	GOEXPERIMENT=""
+	GOFIPS140 ?= ""
+	GOEXPERIMENT ?= ""
 	LDFLAGS+= -s -w
-# We want to use boringcrypto for fips setup
+# Use Go's native FIPS 140-3 module (GOFIPS140=v1.0.0), no CGO required
 else
-	ifeq ($(shell go env GOOS),windows)
-		GOEXPERIMENT=systemcrypto
-		GOTAGS := $(GOTAGS) requirefips
-		LDFLAGS+= -w
-	else
-		GOEXPERIMENT=boringcrypto
-		LDFLAGS+= -w
-	endif
+	GOFIPS140 ?= v1.0.0
+	GOEXPERIMENT ?= ""
+	LDFLAGS+= -w
 endif
 
 # We want to enforce go dns for all types of binaries. The FIPS binaries are
@@ -92,6 +88,7 @@ endif
 build:
 	CGO_ENABLED=$(CGO_ENABLED) \
 	GOEXPERIMENT=$(GOEXPERIMENT) \
+	GOFIPS140=$(GOFIPS140) \
 	$(GO) build -v \
 	-tags "$(GOTAGS)" \
 	-ldflags="$(LDFLAGS)" \
@@ -145,17 +142,15 @@ otelcol-config-windows_amd64:
 otelcol-config-linux-fips_amd64:
 	$(MAKE) otelcol-config-linux_amd64 \
 	FIPS_SUFFIX="-fips" \
-	CGO_ENABLED="1" \
-	CC="$(toolchains_dir)toolchain_amd64/bin/x86_64-linux-musl-gcc" \
-	LDFLAGS="-linkmode external -extldflags '-static'"
+	GOFIPS140="v1.0.0" \
+	GOEXPERIMENT=""
 
 .PHONY: otelcol-config-linux-fips_arm64
 otelcol-config-linux-fips_arm64:
 	$(MAKE) otelcol-config-linux_arm64 \
 	FIPS_SUFFIX="-fips" \
-	CGO_ENABLED="1" \
-	CC="$(toolchains_dir)toolchain_arm64/bin/aarch64-linux-musl-gcc" \
-	LDFLAGS="-linkmode external -extldflags '-static'"
+	GOFIPS140="v1.0.0" \
+	GOEXPERIMENT=""
 
 ################################################################################
 # Disk imaging targets

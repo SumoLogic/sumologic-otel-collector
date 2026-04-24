@@ -103,8 +103,8 @@ else
 	LDFLAGS+= -w
 endif
 
-# We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
-# the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
+# We want to enforce go dns for all types of binaries to avoid DNS resolution
+# errors for .local domains in K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 ifneq ($(shell go env GOOS),windows)
 	GOTAGS := $(GOTAGS) netgo

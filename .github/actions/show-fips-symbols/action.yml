@@ -10,7 +10,7 @@ inputs:
     required: true
   os:
     description: The operating system the binary is built for.
-    required: true
+    required: false
   working-directory:
     description: The working directory where the binary is located.
     required: false

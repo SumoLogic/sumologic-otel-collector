@@ -134,4 +134,4 @@ exporters:
 
 [fips]: https://en.wikipedia.org/wiki/FIPS_140
 [go_fips_doc]: https://go.dev/doc/security/fips140
-[fips_module_status]: https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Basic&ModuleName=go&CertificateStatus=Active&ValidationYear=0
+[fips_module_status]: https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Basic&ModuleName=go&ValidationYear=0

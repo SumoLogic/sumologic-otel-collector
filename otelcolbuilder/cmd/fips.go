@@ -1,4 +1,4 @@
-//go:build goexperiment.fips140
+//go:build go1.24
 
 package main
 

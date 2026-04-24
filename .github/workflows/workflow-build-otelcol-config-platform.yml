@@ -72,7 +72,7 @@ jobs:
       # FIPS Build — uses Go's native FIPS 140-3 module (GOFIPS140=v1.0.0), no CGO required
       - name: Build (FIPS)
         if: inputs.fips
-        run: make otelcol-config-${{ inputs.platform }} FIPS_SUFFIX="-fips"
+        run: make otelcol-config-${{ inputs.platform }} FIPS_SUFFIX="-fips" GOFIPS140="v1.0.0" GOEXPERIMENT=""
         working-directory: ./pkg/tools/otelcol-config
 
       - name: Set binary name
