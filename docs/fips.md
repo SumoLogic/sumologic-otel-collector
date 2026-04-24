@@ -2,9 +2,12 @@
 
 ## Introduction
 
-BoringCrypto is a cryptographic module [validated against FIPS 140][boringcrypto_certs].
+BoringCrypto is a cryptographic module [validated against FIPS 140-3][boringcrypto_certs] (certificate #4735 and later).
+FIPS 140-3 is the current standard, replacing FIPS 140-2 as of 2022.
 
-Sumo OT distro can be built to use BoringCrypto instead of Go standard library crypto implementations.
+Sumo OT distro is built using the [Microsoft distribution of Go][microsoft_go], which bundles a FIPS 140-3 validated
+BoringCrypto module for Linux and uses Windows CNG (also FIPS 140-3 validated) for Windows.
+
 This document explains how to obtain FIPS-capable binaries and how to run them in FIPS-approved mode.
 
 ## Obtaining the binaries
@@ -177,10 +180,9 @@ client point: uncompressed (0)
 
 While [FIPS 140][fips] doesn't, strictly speaking, mandate a specific TLS version, it is nonetheless a good practice to use a recent version. Otelcol allows TLS to be configured for each component individually, in a standardized manner. You can find the details in the [readme](https://github.com/open-telemetry/opentelemetry-collector/blob/main/config/configtls/README.md).
 
-By default, the minimum TLS version for otel components is `1.2`. This is a good default that is compliant with the standard. At the moment, there is some uncertainty as to
-whether BoringCrypto is FIPS-compliant when using TLS `1.3`, so we recommend staying with the default.
+By default, the minimum TLS version for otel components is `1.2`. This is a good default that is compliant with the standard. TLS 1.3 is also FIPS-approved under FIPS 140-3 when using the approved cipher suites (`TLS_AES_128_GCM_SHA256` and `TLS_AES_256_GCM_SHA384`), and BoringCrypto enforces this automatically.
 
-If you nonetheless want to use `1.3`, here's an example for the `otlp` exporter:
+To use `1.3`, here's an example for the `otlp` exporter:
 
 ```yaml
 exporters:
@@ -192,3 +194,4 @@ exporters:
 
 [fips]: https://en.wikipedia.org/wiki/FIPS_140
 [boringcrypto_certs]: https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Basic&ModuleName=boring&CertificateStatus=Active&ValidationYear=0
+[microsoft_go]: https://github.com/microsoft/go

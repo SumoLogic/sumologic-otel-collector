@@ -47,10 +47,23 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
+      - name: Set Go Distribution
+        id: go-distribution
+        run: |
+          distribution="official"
+          fips="${{ inputs.fips }}"
+
+          if [[ "${fips}" == "true" ]]; then
+            distribution="microsoft"
+          fi
+
+          echo "name=${distribution}" >> "$GITHUB_OUTPUT"
+
       - name: Setup Go Distribution
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
+          distribution: ${{ steps.go-distribution.outputs.name }}
           version: ${{ inputs.go-version }}
           cache-name: otelcol-config-go-cache
           cache-dependency-paths: |
