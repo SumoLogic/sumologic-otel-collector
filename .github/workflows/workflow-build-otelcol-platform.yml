@@ -110,23 +110,10 @@ jobs:
           key: nonexistent
           restore-keys: ${{ steps.cache-keys.outputs.go-cache }}-
 
-      - name: Set Go Distribution
-        id: go-distribution
-        run: |
-          distribution="official"
-          fips="${{ inputs.fips }}"
-
-          if [[ "${fips}" == "true" ]]; then
-            distribution="microsoft"
-          fi
-
-          echo "name=${distribution}" >> "$GITHUB_OUTPUT"
-
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          distribution: ${{ steps.go-distribution.outputs.name }}
           version: ${{ inputs.go-version }}
           cache-dependency-paths: |
             **/*.sum
@@ -138,12 +125,6 @@ jobs:
 
       - name: Install Go modules
         run: make gomod-download-all-parallel PARALLEL_JOBS=8
-
-      - name: Setup Toolchain
-        uses: ./.github/actions/setup-toolchain
-        if: inputs.fips && steps.platform.outputs.os == 'linux'
-        with:
-          platform: ${{ inputs.platform }}
 
       - name: Free disk space
         if: runner.os == 'Linux'
@@ -168,28 +149,11 @@ jobs:
         working-directory: ./otelcolbuilder
         run: make otelcol-sumo-${{ inputs.platform }}
 
-      # FIPS Build for Linux
+      # FIPS Build — uses Go's native FIPS 140-3 module (GOFIPS140=v1.0.0), no CGO required
       - name: Build (FIPS)
-        if: inputs.fips && steps.platform.outputs.os == 'linux'
+        if: inputs.fips
         working-directory: ./otelcolbuilder
-        run: |
-          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
-          test "$CC"
-          echo "Using toolchain: $CC"
-          make otelcol-sumo-${{ inputs.platform }} \
-            FIPS_SUFFIX="-fips" \
-            CGO_ENABLED="1" \
-            CC="$CC" \
-            EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
-
-      # FIPS Build for non-Linux platforms
-      - name: Build (FIPS)
-        if: inputs.fips && steps.platform.outputs.os != 'linux'
-        working-directory: ./otelcolbuilder
-        run: |
-          make otelcol-sumo-${{ inputs.platform }} \
-          FIPS_SUFFIX="-fips" \
-          CGO_ENABLED="1"
+        run: make otelcol-sumo-${{ inputs.platform }} FIPS_SUFFIX="-fips"
 
       - name: Trim Go cache
         if: github.ref == 'refs/heads/main' && runner.os != 'Windows'

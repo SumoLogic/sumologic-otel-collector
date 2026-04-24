@@ -47,23 +47,10 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
-      - name: Set Go Distribution
-        id: go-distribution
-        run: |
-          distribution="official"
-          fips="${{ inputs.fips }}"
-
-          if [[ "${fips}" == "true" ]]; then
-            distribution="microsoft"
-          fi
-
-          echo "name=${distribution}" >> "$GITHUB_OUTPUT"
-
       - name: Setup Go Distribution
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          distribution: ${{ steps.go-distribution.outputs.name }}
           version: ${{ inputs.go-version }}
           cache-name: otelcol-config-go-cache
           cache-dependency-paths: |
@@ -82,23 +69,10 @@ jobs:
         run: make otelcol-config-${{ inputs.platform }}
         working-directory: ./pkg/tools/otelcol-config
 
-      - name: Setup Toolchain
-        uses: ./.github/actions/setup-toolchain
-        if: inputs.fips && steps.platform.outputs.os == 'linux'
-        with:
-          platform: ${{ inputs.platform }}
-
+      # FIPS Build — uses Go's native FIPS 140-3 module (GOFIPS140=v1.0.0), no CGO required
       - name: Build (FIPS)
-        if: inputs.fips && steps.platform.outputs.os == 'linux'
-        run: |
-          CC=$(find /opt/toolchain/bin -type f -name "*-linux-musl-gcc")
-          test "$CC"
-          echo "Using toolchain: $CC"
-          make otelcol-config-${{ inputs.platform }} \
-            FIPS_SUFFIX="-fips" \
-            CGO_ENABLED="1" \
-            CC="$CC" \
-            LDFLAGS="-linkmode external -extldflags '-static'"
+        if: inputs.fips
+        run: make otelcol-config-${{ inputs.platform }} FIPS_SUFFIX="-fips"
         working-directory: ./pkg/tools/otelcol-config
 
       - name: Set binary name

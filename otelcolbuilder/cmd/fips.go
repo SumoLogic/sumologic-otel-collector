@@ -1,20 +1,14 @@
-//go:build goexperiment.boringcrypto || goexperiment.cngcrypto
+//go:build goexperiment.fips140
 
 package main
 
 import (
+	"crypto/fips140"
 	"log"
-
-	"crypto/boring"
-	_ "crypto/tls/fipsonly"
 )
 
 func init() {
-	attestFIPS()
-}
-
-func attestFIPS() {
-	if boring.Enabled() {
-		log.Print("Using BoringSSL and running in FIPS mode")
+	if fips140.Enabled() {
+		log.Print("Running in FIPS 140-3 mode")
 	}
 }

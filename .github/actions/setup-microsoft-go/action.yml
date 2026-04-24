@@ -4,7 +4,7 @@ inputs:
   install-dir:
     description: The directory to install Go to.
     required: false
-    default: <auto>
+    default: D:\go
   version:
     description: The version of Go to install.
     required: true
@@ -17,12 +17,19 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Check Runner
+      shell: bash
+      run: |
+        if [[ "${RUNNER_OS}" != "Windows" ]]; then
+          echo "The Microsoft distribution of Go is only supported on Windows runners"
+          exit 1
+        fi
+
     - name: Set GitHub Path
       shell: bash
       run: echo "${{ github.action_path }}" >> $GITHUB_PATH
 
     - name: Create Go directory
-      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         $installDir = "${{ inputs.install-dir }}"
@@ -33,7 +40,4 @@ runs:
 
     - name: Install Microsoft Distribution of Go
       shell: pwsh
-      run: |
-        $installDir = "${{ inputs.install-dir }}"
-        if ([string]::IsNullOrEmpty($installDir)) { $installDir = "<auto>" }
-        go-install.ps1 -Version "go${{ inputs.version }}" -InstallDir "$installDir"
+      run: go-install.ps1 -Version "go${{ inputs.version }}" -InstallDir "${{ inputs.install-dir }}"
