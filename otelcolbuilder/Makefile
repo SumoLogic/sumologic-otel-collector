@@ -94,21 +94,17 @@ endif
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),)
 	GOEXPERIMENT=
+	GOFIPS140=
 	LDFLAGS+= -s -w
 else
-# We want to use boringcrypto for fips setup
-	ifeq ($(shell go env GOOS),windows)
-		GOEXPERIMENT=systemcrypto
-		GOTAGS := $(GOTAGS) requirefips
-		LDFLAGS+= -w
-	else
-		GOEXPERIMENT=boringcrypto
-		LDFLAGS+= -w
-	endif
+# Use Go's native FIPS 140-3 module (Go 1.24+). No CGO or external crypto library required.
+	GOEXPERIMENT=
+	GOFIPS140=v1.0.0
+	LDFLAGS+= -w
 endif
 
-# We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
-# the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
+# We want to enforce go dns for all types of binaries to avoid DNS resolution
+# errors for .local domains in K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 ifneq ($(shell go env GOOS),windows)
 	GOTAGS := $(GOTAGS) netgo
@@ -179,7 +175,7 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) GOFIPS140=$(GOFIPS140) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
@@ -190,7 +186,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) GOFIPS140=$(GOFIPS140) go build -v \
 		-tags "$(GOTAGS)" \
 		-race \
 		-gcflags "all=-N -l" \
@@ -233,7 +229,7 @@ generate-sources:
 .PHONY: test
 test:
 	@$(MAKE) generate-sources
-	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) $(MAKE) -C cmd test
+	CGO_ENABLED=${CGO_ENABLED} GOEXPERIMENT=$(GOEXPERIMENT) GOFIPS140=$(GOFIPS140) $(MAKE) -C cmd test
 
 .PHONY: lint
 lint: ensure-correct-ocb-version generate-sources
@@ -273,18 +269,12 @@ otelcol-sumo-windows_amd64:
 .PHONY: otelcol-sumo-linux-fips_arm64
 otelcol-sumo-linux-fips_arm64:
 	$(MAKE) otelcol-sumo-linux_arm64 \
-		FIPS_SUFFIX=-fips \
-		CGO_ENABLED=1 \
-		CC="$(toolchains_dir)/toolchain_arm64/bin/aarch64-linux-musl-gcc" \
-		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+		FIPS_SUFFIX=-fips
 
 .PHONY: otelcol-sumo-linux-fips_amd64
 otelcol-sumo-linux-fips_amd64:
 	$(MAKE) otelcol-sumo-linux_amd64 \
-		FIPS_SUFFIX=-fips \
-		CGO_ENABLED=1 \
-		CC="$(toolchains_dir)/toolchain_amd64/bin/x86_64-linux-musl-gcc" \
-		EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
+		FIPS_SUFFIX=-fips
 
 ################################################################################
 # Signing targets
