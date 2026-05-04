@@ -6,9 +6,6 @@
       check_interval: 5s
       limit_percentage: 75
       spike_limit_percentage: 20
-    batch:
-      send_batch_size: 1_024
-      timeout: 1s
     resourcedetection/system:
       detectors: ["system"]
       system:
@@ -47,7 +44,6 @@
         processors:
           - memory_limiter
           - resourcedetection/system
-          - batch
           - resource/metrics/8613f4d2-365f-4f94-abc1-066622d9b028
           - resource/8613f4d2-365f-4f94-abc1-066622d9b028
         exporters:
