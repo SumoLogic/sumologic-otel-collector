@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
@@ -110,8 +109,12 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			locations := []string{tc.configFile}
 
 			// this is copied from the generated main.go
+			// DefaultScheme must be set to "env" to match what the otelcol command
+			// does in updateSettingsUsingFlags — this allows ${VAR} references in
+			// config files (e.g. ${TMPDIR}) to be expanded via the env provider.
 			settings := otelcol.ConfigProviderSettings{
 				ResolverSettings: confmap.ResolverSettings{
+					DefaultScheme: "env",
 					ProviderFactories: []confmap.ProviderFactory{
 						globprovider.NewFactory(),
 						opampprovider.NewFactory(),
@@ -121,9 +124,7 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 						httpsprovider.NewFactory(),
 						yamlprovider.NewFactory(),
 					},
-					ConverterFactories: []confmap.ConverterFactory{
-						expandconverter.NewFactory(),
-					},
+					ConverterFactories: []confmap.ConverterFactory{},
 				},
 			}
 			settings.ResolverSettings.URIs = locations
