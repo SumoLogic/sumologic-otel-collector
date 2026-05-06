@@ -1,0 +1,1 @@
+fix(opamp): remove expandconverter from OpAMP config provider to fix $1 pattern crash
