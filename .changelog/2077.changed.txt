@@ -1,1 +1,1 @@
-chore: bump the go version to oldstable
+chore: bump the go version to oldstable(1.25.9)
