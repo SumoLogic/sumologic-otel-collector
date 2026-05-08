@@ -12,6 +12,7 @@ FROM_VERSION_FIXED=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --from-ver)
+            shift
             FROM_VERSION_FIXED="$1"
             shift
             ;;
@@ -22,7 +23,7 @@ while [[ $# -gt 0 ]]; do
 done
 make gomod-download-all
 TO_VERSIONS=$(grep -o 'github.com/open-telemetry/opentelemetry-collector-contrib[^ ]* v[0-9.]\+' pkg/extension/opampextension/go.mod | awk '{print $2}' | sed 's/^v//' | sort -u)
-TO_VERSION_COUNT=$(echo "$versions" | wc -l)
+TO_VERSION_COUNT=$(echo "$TO_VERSIONS" | wc -l)
 if [[ "$TO_VERSION_COUNT" -gt 1 ]]; then
   echo "Error: Multiple versions found: $TO_VERSIONS"
   exit 1
