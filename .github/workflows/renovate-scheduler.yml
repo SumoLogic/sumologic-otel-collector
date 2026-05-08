@@ -2,12 +2,39 @@ name: Renovate-scheduler
 on:
   schedule:
     - cron: '0 3 * * 2'   # every Tuesday at 3 AM UTC
-  workflow_dispatch:      # allow manual runs
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Log level"
+        type: choice
+        default: "debug"
+        options:
+          - "info"
+          - "debug"
+          - "warn"
+      dryRun:
+        description: "Dry-run: full (simulate PRs), lookup (check updates only), extract (parse deps only)"
+        type: choice
+        default: ""
+        options:
+          - ""
+          - "full"
+          - "lookup"
+          - "extract"
+
+concurrency: renovate
 
 jobs:
   renovate:
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate Renovate config
+        uses: rinchsan/renovate-config-validator@v0.2.1
+        with:
+          pattern: renovate.json5
+
       - name: Generate GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@v2
@@ -15,13 +42,13 @@ jobs:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v6
-
       - name: Renovate run
         uses: renovatebot/github-action@v46.1.13
         env:
-          LOG_LEVEL: debug
-          RENOVATE_REPOSITORIES: SumoLogic/sumologic-otel-collector
+          LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun || '' }}
+          RENOVATE_ONBOARDING: "false"
         with:
           token: ${{ steps.app-token.outputs.token }}
           configurationFile: renovate.json5
