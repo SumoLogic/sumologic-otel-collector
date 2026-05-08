@@ -5,6 +5,7 @@
   "labels": ["dependencies"],
   "recreateWhen": "always",
   "prHourlyLimit": 5,
+  "postUpdateOptions": ["gomodTidy"],
   "commitMessagePrefix": "chore(deps):",
   "commitMessageAction": "bump",
   "commitMessageExtra": "{{depName}} from {{currentValue}} to {{newValue}}",
@@ -15,17 +16,10 @@
     },
     {
       "matchPackagePatterns": [
-        "^go\\.opentelemetry\\.io/collector.*$"
-      ],
-      "groupName": "opentelemetry-collector",
-      "enabled": true
-    },
-    {
-      "matchPackagePatterns": [
+        "^go\\.opentelemetry\\.io/collector.*$",
         "^github\\.com/open-telemetry/opentelemetry-collector-contrib.*$"
       ],
       "groupName": "opentelemetry-collector",
-      "allowedVersions": "<2.0.0",
       "enabled": true
     },
     {
@@ -33,11 +27,5 @@
       "matchPackagePatterns": ["semconv"],
       "enabled": false
     },
-    {
-      "description": "Ignore pseudo-version pins that Renovate cannot resolve",
-      "matchFileNames": ["pkg/processor/lookupprocessor/go.mod"],
-      "matchPackagePatterns": ["^go\\.opentelemetry\\.io/collector.*$"],
-      "enabled": false
-    }
   ]
 }
