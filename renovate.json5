@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["group:all"],
+  "baseBranches": ["fix/renovate-automation"],
   "enabledManagers": ["gomod"],
   "labels": ["dependencies"],
   "recreateWhen": "always",
