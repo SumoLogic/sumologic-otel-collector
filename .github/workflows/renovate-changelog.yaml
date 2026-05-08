@@ -44,7 +44,7 @@ jobs:
         if: steps.check-skip.outputs.skip != 'true'
         uses: actions/setup-go@v6
         with:
-          go-version: "1.25"
+          go-version: "oldstable"
 
       - name: Run renovate.sh (doc updates + changelog)
         if: steps.check-skip.outputs.skip != 'true'
