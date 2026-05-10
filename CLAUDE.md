@@ -72,10 +72,13 @@ make pre-commit-check          # runs all pre-commit hooks
 ## Architecture
 
 ### Build System
+
 The binary is built using the **OpenTelemetry Collector Builder (ocb)** v0.151.0, configured by `otelcolbuilder/.otelcol-builder.yaml`. The builder generates Go source files in `otelcolbuilder/cmd/` — **these are committed but should not be edited directly**. After generation, two patches are applied (`otelcolbuilder/00_main.go.patch`, `01_main.go.patch`) to wire in custom config providers.
 
 ### Custom Components (`pkg/`)
+
 Sumo Logic-specific components, each an independent Go module:
+
 - **Processors**: `cascadingfilterprocessor`, `sourceprocessor`, `lookupprocessor`, `metricfrequencyprocessor`, `sumologicsyslogprocessor`
 - **Receivers**: `activedirectoryinvreceiver`, `jobreceiver`, `rawk8seventsreceiver`
 - **Extension**: `opampextension`
@@ -84,6 +87,7 @@ Sumo Logic-specific components, each an independent Go module:
 - **Integration Tests**: `pkg/test`
 
 ### CGO and FIPS
+
 - macOS and Windows: `CGO_ENABLED=1` (required for gopsutil/Telegraf plugins)
 - Linux standard: `CGO_ENABLED=0`
 - FIPS builds: `GOEXPERIMENT=boringcrypto` (Linux) or `GOEXPERIMENT=systemcrypto` with `-tags requirefips` (Windows), built with musl toolchains
@@ -91,6 +95,7 @@ Sumo Logic-specific components, each an independent Go module:
 ## Development Setup
 
 Required tools:
+
 - **Go 1.25.0**
 - **ocb 0.151.0**: `make -C otelcolbuilder install-ocb`
 - **yq**: `brew install yq`
