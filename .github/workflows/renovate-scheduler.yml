@@ -42,12 +42,24 @@ jobs:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
 
-      - name: Renovate run
+      - name: Renovate run (dry-run)
+        if: inputs.dryRun != 'none' && inputs.dryRun != ''
         uses: renovatebot/github-action@v46.1.13
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
-          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'none' && '' || inputs.dryRun }}
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun }}
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          configurationFile: renovate.json5
+
+      - name: Renovate run
+        if: inputs.dryRun == 'none' || inputs.dryRun == ''
+        uses: renovatebot/github-action@v46.1.13
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_ONBOARDING: "false"
         with:
           token: ${{ steps.app-token.outputs.token }}
