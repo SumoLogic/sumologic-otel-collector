@@ -2,7 +2,27 @@ name: Renovate-scheduler
 on:
   schedule:
     - cron: '0 3 * * 2'   # every Tuesday at 3 AM UTC
-  workflow_dispatch:      # allow manual runs
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Log level"
+        type: choice
+        default: "debug"
+        options:
+          - "info"
+          - "debug"
+          - "warn"
+      dryRun:
+        description: "Dry-run: full (simulate PRs), lookup (check updates only), extract (parse deps only)"
+        type: choice
+        default: "none"
+        options:
+          - "none"
+          - "full"
+          - "lookup"
+          - "extract"
+
+concurrency: renovate
 
 jobs:
   renovate:
@@ -10,11 +30,87 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Renovate run
-        uses: renovatebot/github-action@v44.2.6
-        env:
-          LOG_LEVEL: debug
-          RENOVATE_REPOSITORIES: SumoLogic/sumologic-otel-collector
+      - name: Validate Renovate config
+        uses: rinchsan/renovate-config-validator@v0.2.1
         with:
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          pattern: renovate.json5
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
+
+      - name: Renovate run
+        uses: renovatebot/github-action@v46.1.13
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'none' && '' || inputs.dryRun }}
+          RENOVATE_ONBOARDING: "false"
+        with:
+          token: ${{ steps.app-token.outputs.token }}
           configurationFile: renovate.json5
+
+  update-renovate-pr:
+    needs: renovate
+    if: inputs.dryRun == 'none' || inputs.dryRun == ''
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
+
+      - name: Find renovate PR branch
+        id: find-pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          BRANCH=$(gh pr list --repo "${{ github.repository }}" --author "renovatebot-sumologic[bot]" \
+            --state open --json headRefName --jq '.[0].headRefName' 2>/dev/null || true)
+          if [[ -z "$BRANCH" ]]; then
+            echo "No open renovate PR found, skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found renovate branch: $BRANCH"
+            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout renovate branch
+        if: steps.find-pr.outputs.skip != 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.find-pr.outputs.branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        if: steps.find-pr.outputs.skip != 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version: "oldstable"
+
+      - name: Run renovate.sh (doc updates + changelog)
+        if: steps.find-pr.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          chmod +x .github/renovate.sh
+          .github/renovate.sh
+
+      - name: Commit and push changes
+        if: steps.find-pr.outputs.skip != 'true'
+        env:
+          BRANCH: ${{ steps.find-pr.outputs.branch }}
+        run: |
+          git config user.name "renovatebot-sumologic[bot]"
+          git config user.email "279692411+renovatebot-sumologic[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "docs: update docs and changelog after dependency upgrade"
+          git push origin "$BRANCH"
