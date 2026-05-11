@@ -58,22 +58,3 @@ for FROM_VER in $FROM_VERSIONS; do
         docs/performance.md \
         pkg/receiver/telegrafreceiver/README.md
 done
-
-# Create changelog entry for the bump PR
-# PR_NUMBER can be passed as an env var from the workflow, or detected via gh CLI
-if [[ -z "$PR_NUMBER" ]]; then
-    PR_NUMBER=$(gh pr list --repo SumoLogic/sumologic-otel-collector --state open \
-        --search "chore(deps): bump opentelemetry-collector" \
-        --json number --jq '.[0].number' 2>/dev/null || true)
-fi
-if [[ -n "$PR_NUMBER" ]]; then
-    CHANGELOG_FILE=".changelog/${PR_NUMBER}.changed.txt"
-    if [[ -e "${CHANGELOG_FILE}" ]]; then
-        echo "Changelog entry already exists, not overwriting: ${CHANGELOG_FILE}"
-    else
-        echo "chore: upgrade core and contrib to ${TO_VER}" > "${CHANGELOG_FILE}"
-        echo "Created changelog entry: ${CHANGELOG_FILE}"
-    fi
-else
-    echo "Warning: Could not determine PR number; skipping changelog entry creation."
-fi
