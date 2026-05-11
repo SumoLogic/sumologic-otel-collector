@@ -1,4 +1,7 @@
-name: Update docs After Renovate
+name: "[DEPRECATED] Update docs After Renovate"
+
+# DEPRECATED: This workflow is superseded by renovate-changelog.yaml which runs
+# automatically on renovate PRs. Keep this as a manual fallback for edge cases.
 
 on:
   workflow_dispatch:
