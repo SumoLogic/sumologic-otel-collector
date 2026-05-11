@@ -69,3 +69,6 @@ artifacts/
 
 .idea
 venv/
+
+# vim luddites assemble
+*.swp

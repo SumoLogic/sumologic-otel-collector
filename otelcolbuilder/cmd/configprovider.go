@@ -22,8 +22,8 @@ import (
 	"slices"
 
 	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/featuregate"
 	"go.opentelemetry.io/collector/otelcol"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider"
@@ -34,6 +34,20 @@ import (
 // https://github.com/open-telemetry/opentelemetry-collector/blob/65dfc325d974be8ebb7c170b90c6646f9eaef27b/service/command.go#L38
 
 func UseCustomConfigProvider(params *otelcol.CollectorSettings) error {
+
+	// feature flags, which are enabled by default in our distro
+	registry := featuregate.GlobalRegistry()
+
+	gates := map[string]bool{
+		"domainControllers.autodiscovery": true,
+	}
+
+	for id, enabled := range gates {
+		if err := registry.Set(id, enabled); err != nil {
+			return fmt.Errorf("%s feature gate flags failed: %s", id, err)
+		}
+	}
+
 	// we need to check if any config locations have been set alongside the opamp config
 	flagset := flags()
 
@@ -77,8 +91,7 @@ func NewOpAmpConfigProviderSettings(location string) otelcol.ConfigProviderSetti
 	return otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
 			URIs:               []string{location},
-			ProviderFactories:  []confmap.ProviderFactory{opampprovider.NewFactory(), envprovider.NewFactory()},
-			ConverterFactories: []confmap.ConverterFactory{expandconverter.NewFactory()},
+			ProviderFactories: []confmap.ProviderFactory{opampprovider.NewFactory(), envprovider.NewFactory()},
 		},
 	}
 }

@@ -126,7 +126,7 @@ This section lists the components supported for remote configuration validation 
 |      awsfirehose       |                      |               |        zpages        |            |
 |        awsxray         |        schema        |               |  asapauthextension   |            |
 |        collectd        |         span         |               |       ecstask        |            |
-|        couchdb         |     tailsampling     |               |                      |            |
+|        couchdb         |     tailsampling     |               |    memorylimiter     |            |
 |        datadog         |        unroll        |               |                      |            |
 |         expvar         |                      |               |                      |            |
 |       filestats        |                      |               |                      |            |

@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 	"go.opentelemetry.io/collector/exporter/otlphttpexporter"
 	"go.opentelemetry.io/collector/extension"
+	"go.opentelemetry.io/collector/extension/memorylimiterextension"
 	"go.opentelemetry.io/collector/extension/zpagesextension"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/processor"
@@ -17,6 +18,8 @@ import (
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
 	"go.uber.org/multierr"
+
+	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awss3exporter"
@@ -147,7 +150,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver"
-	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
 )
 
 // Components returns the set of components for tests
@@ -175,6 +177,7 @@ func Components() (
 		httpforwarderextension.NewFactory(),
 		jaegerremotesampling.NewFactory(),
 		k8sobserver.NewFactory(),
+		memorylimiterextension.NewFactory(),
 		oauth2clientauthextension.NewFactory(),
 		oidcauthextension.NewFactory(),
 		sigv4authextension.NewFactory(),
