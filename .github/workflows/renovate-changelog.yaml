@@ -50,9 +50,25 @@ jobs:
         if: steps.check-skip.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           chmod +x .github/renovate.sh
           .github/renovate.sh
+
+      - name: Ensure changelog entry exists
+        if: steps.check-skip.outputs.skip != 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CHANGELOG_FILE=".changelog/${PR_NUMBER}.changed.txt"
+          if [[ ! -e "$CHANGELOG_FILE" ]]; then
+            TO_VER=$(grep -o 'github.com/open-telemetry/opentelemetry-collector-contrib[^ ]* v[0-9.]\+' \
+              pkg/extension/opampextension/go.mod | awk '{print $2}' | sed 's/^v//' | sort -u | head -1)
+            echo "chore: upgrade core and contrib to ${TO_VER}" > "$CHANGELOG_FILE"
+            echo "Created changelog entry: $CHANGELOG_FILE"
+          else
+            echo "Changelog entry already exists: $CHANGELOG_FILE"
+          fi
 
       - name: Commit and push changes
         if: steps.check-skip.outputs.skip != 'true'
