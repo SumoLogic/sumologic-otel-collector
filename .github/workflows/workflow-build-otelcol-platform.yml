@@ -307,7 +307,7 @@ jobs:
         if: runner.os == 'Windows' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
         run: |
           echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > "${RUNNER_TEMP}/Certificate_pkcs12.p12"
-          echo "SM_CLIENT_CERT_FILE=${RUNNER_TEMP}/Certificate_pkcs12.p12" >> $GITHUB_ENV
+          echo "SM_CLIENT_CERT_FILE=${RUNNER_TEMP}/Certificate_pkcs12.p12" >> "$GITHUB_ENV"
 
       - name: Sign Windows binary
         if: runner.os == 'Windows' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
