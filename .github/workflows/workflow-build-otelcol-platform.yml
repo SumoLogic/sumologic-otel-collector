@@ -303,16 +303,38 @@ jobs:
             exit 1
           fi
 
+      - name: Setup DigiCert certificate file
+        if: runner.os == 'Windows' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
+        run: |
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > "${RUNNER_TEMP}/Certificate_pkcs12.p12"
+          echo "SM_CLIENT_CERT_FILE=${RUNNER_TEMP}/Certificate_pkcs12.p12" >> "$GITHUB_ENV"
+
       - name: Sign Windows binary
         if: runner.os == 'Windows' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
-        uses: skymatic/code-sign-action@v3
+        uses: digicert/code-signing-software-trust-action@v1.2.1
         with:
-          certificate: ${{ secrets.MICROSOFT_CERTIFICATE }}
-          password: ${{ secrets.MICROSOFT_CERTIFICATE_PASSWORD }}
-          certificatesha1: ${{ secrets.MICROSOFT_CERTHASH }}
-          certificatename: ${{ secrets.MICROSOFT_CERTNAME }}
-          description: ${{ secrets.MICROSOFT_DESCRIPTION }}
-          folder: ./otelcolbuilder/cmd
+          simple-signing-mode: true
+          input: ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }}
+          keypair-alias: ${{ secrets.SM_KEYPAIR_ALIAS }}
+          unsigned: true
+          zero-exit-code-on-failure: true
+        env:
+          SM_HOST: ${{ vars.SM_HOST }}
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+
+      - name: Verify DigiCert KeyLocker and sign binary
+        if: runner.os == 'Windows' && inputs.signing-enabled && github.actor != 'dependabot[bot]'
+        run: |
+          smctl.exe healthcheck
+          smctl.exe keypair ls
+          smctl.exe sign --simple --input ./otelcolbuilder/cmd/${{ steps.binary-name.outputs.name-with-platform }} --keypair-alias ${{ secrets.SM_KEYPAIR_ALIAS }} --exit-non-zero-on-fail --failfast
+        env:
+          SM_HOST: ${{ vars.SM_HOST }}
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_FILE: ${{ env.SM_CLIENT_CERT_FILE }}
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
 
       - name: Test binary
         if: inputs.platform == 'linux_amd64'
