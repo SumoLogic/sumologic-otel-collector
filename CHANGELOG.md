@@ -11,10 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Released 2026-05-14
 
-### Added
-
-- Add CLAUDE.md with build, test, lint commands and architecture overview for Claude Code [#2082]
-
 ### Changed
 
 - chore: bump the go version to oldstable(1.25.9) [#2077]
@@ -24,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix(opamp): remove expandconverter from OpAMP config provider to fix $1 pattern crash [#2076]
 
-[#2082]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2082
 [#2077]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2077
 [#2087]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2087
 [#2076]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2076
