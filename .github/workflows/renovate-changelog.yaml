@@ -5,21 +5,13 @@ on:
     types: [opened, synchronize]
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      pr_branch:
-        description: "Renovate PR branch to update (e.g. renovate/opentelemetry-collector)"
-        required: true
-      pr_number:
-        description: "PR number"
-        required: true
 
 permissions:
   contents: read
 
 jobs:
   add-changelog:
-    if: startsWith(github.head_ref || inputs.pr_branch, 'renovate/')
+    if: startsWith(github.head_ref, 'renovate/')
     runs-on: ubuntu-24.04
 
     steps:
@@ -33,7 +25,7 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.head_ref || inputs.pr_branch }}
+          ref: ${{ github.head_ref }}
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Go
@@ -50,9 +42,9 @@ jobs:
 
       - name: Create changelog entry
         env:
-          PR_TITLE: "${{ github.event.pull_request.title || 'chore(deps): bump opentelemetry-collector' }}"
+          PR_TITLE: "${{ github.event.pull_request.title }}"
         run: |
-          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
           mkdir -p .changelog
 
           # Skip if any changelog fragment already exists for this PR
@@ -66,7 +58,7 @@ jobs:
 
       - name: Commit and push changes
         env:
-          HEAD_REF: ${{ github.head_ref || inputs.pr_branch }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git config user.name "renovatebot-sumologic[bot]"
           git config user.email "279692411+renovatebot-sumologic[bot]@users.noreply.github.com"
