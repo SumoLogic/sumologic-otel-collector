@@ -32,10 +32,10 @@ jobs:
       - name: Skip if last commit is already from this workflow
         id: check-skip
         run: |
-          LAST_AUTHOR=$(git log -1 --format='%an')
-          if [[ "$LAST_AUTHOR" == "renovatebot-sumologic[bot]" ]]; then
+          LAST_MSG=$(git log -1 --format='%s')
+          if [[ "$LAST_MSG" == "docs: update docs and changelog after dependency upgrade" ]]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping: last commit already from renovatebot-sumologic[bot]"
+            echo "Skipping: last commit is already from this workflow"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
