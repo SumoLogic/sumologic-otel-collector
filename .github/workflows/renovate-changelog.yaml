@@ -5,13 +5,21 @@ on:
     types: [opened, synchronize]
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      pr_branch:
+        description: "Renovate PR branch to update (e.g. renovate/opentelemetry-collector)"
+        required: true
+      pr_number:
+        description: "PR number"
+        required: true
 
 permissions:
   contents: read
 
 jobs:
   add-changelog:
-    if: startsWith(github.head_ref, 'renovate/')
+    if: startsWith(github.head_ref || inputs.pr_branch, 'renovate/')
     runs-on: ubuntu-24.04
 
     steps:
@@ -25,29 +33,15 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || inputs.pr_branch }}
           token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 2
-
-      - name: Skip if last commit is already from this workflow
-        id: check-skip
-        run: |
-          LAST_MSG=$(git log -1 --format='%s')
-          if [[ "$LAST_MSG" == "docs: update docs and changelog after dependency upgrade" ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping: last commit is already from this workflow"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Set up Go
-        if: steps.check-skip.outputs.skip != 'true'
         uses: actions/setup-go@v6
         with:
           go-version: "oldstable"
 
       - name: Run renovate.sh (doc updates)
-        if: steps.check-skip.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -55,11 +49,10 @@ jobs:
           .github/renovate.sh
 
       - name: Create changelog entry
-        if: steps.check-skip.outputs.skip != 'true'
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ github.event.pull_request.title || 'chore(deps): bump opentelemetry-collector' }}
         run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
           mkdir -p .changelog
 
           # Skip if any changelog fragment already exists for this PR
@@ -72,9 +65,8 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.check-skip.outputs.skip != 'true'
         env:
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.head_ref || inputs.pr_branch }}
         run: |
           git config user.name "renovatebot-sumologic[bot]"
           git config user.email "279692411+renovatebot-sumologic[bot]@users.noreply.github.com"
