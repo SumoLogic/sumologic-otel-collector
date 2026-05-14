@@ -50,7 +50,7 @@ jobs:
 
       - name: Create changelog entry
         env:
-          PR_TITLE: ${{ github.event.pull_request.title || 'chore(deps): bump opentelemetry-collector' }}
+          PR_TITLE: "${{ github.event.pull_request.title || 'chore(deps): bump opentelemetry-collector' }}"
         run: |
           PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
           mkdir -p .changelog
