@@ -27,27 +27,13 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 2
-
-      - name: Skip if last commit is already from this workflow
-        id: check-skip
-        run: |
-          LAST_AUTHOR=$(git log -1 --format='%an')
-          if [[ "$LAST_AUTHOR" == "renovatebot-sumologic[bot]" ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping: last commit already from renovatebot-sumologic[bot]"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Set up Go
-        if: steps.check-skip.outputs.skip != 'true'
         uses: actions/setup-go@v6
         with:
           go-version: "oldstable"
 
       - name: Run renovate.sh (doc updates)
-        if: steps.check-skip.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -55,9 +41,8 @@ jobs:
           .github/renovate.sh
 
       - name: Create changelog entry
-        if: steps.check-skip.outputs.skip != 'true'
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: "${{ github.event.pull_request.title }}"
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
           mkdir -p .changelog
@@ -72,7 +57,6 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.check-skip.outputs.skip != 'true'
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
