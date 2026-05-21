@@ -13,3 +13,6 @@ github_actions:
 # Add 'go' label to any change *.go files
 go:
 - any: ['**/*.go']
+
+osc:
+- any: ['**']
