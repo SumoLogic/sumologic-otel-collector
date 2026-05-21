@@ -8,8 +8,11 @@ docker:
 
 # Add 'github_actions' label to any change .github/ directory
 github_actions:
-- any: ['.github/**']
+- any: ['.github/**', '.github/*']
 
 # Add 'go' label to any change *.go files
 go:
 - any: ['**/*.go']
+
+osc:
+- any: ['**']
