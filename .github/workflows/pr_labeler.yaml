@@ -1,12 +1,14 @@
 name: PRs labeler
 
 on:
-  - pull_request_target
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 jobs:
   triage:
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/labeler@v6
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
