@@ -19,6 +19,13 @@ processors:
 exporters:
   otlphttp:
     endpoint: SUMO_OTLP_HTTP_ENDPOINT_URL
+    sending_queue:
+      enabled: true
+      queue_size: 256000
+      batch:
+        flush_timeout: 1s
+        min_size: 256
+        max_size: 512
 service:
   extensions: [health_check]
   pipelines:

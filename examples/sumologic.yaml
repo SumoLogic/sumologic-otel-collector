@@ -49,6 +49,11 @@ exporters:
     sending_queue:
       enabled: true
       storage: file_storage
+      queue_size: 1024000
+      batch:
+        flush_timeout: 1s
+        min_size: 1024
+        max_size: 2048
     retry_on_failure:
       max_elapsed_time: 0
 

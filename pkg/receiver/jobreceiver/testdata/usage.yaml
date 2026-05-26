@@ -68,6 +68,13 @@ exporters:
   debug:
     verbosity: detailed
     sampling_initial: 32
+    sending_queue:
+      enabled: true
+      queue_size: 25600000
+      batch:
+        flush_timeout: 1s
+        min_size: 1024
+        max_size: 2048
 
 processors:
   memory_limiter:

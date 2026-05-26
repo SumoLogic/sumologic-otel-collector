@@ -47,6 +47,13 @@ exporters:
     endpoint: HOSTNAME
     tls:
       insecure: true
+    sending_queue:
+      enabled: true
+      queue_size: 256000
+      batch:
+        flush_timeout: 5s
+        min_size: 256
+        max_size: 512
 service:
   extensions: [health_check]
   pipelines:
