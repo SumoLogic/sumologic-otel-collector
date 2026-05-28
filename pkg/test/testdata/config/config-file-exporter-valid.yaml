@@ -9,11 +9,7 @@ exporters:
     path: ./output/test.log
     sending_queue:
       enabled: true
-      queue_size: 25600000
-      batch:
-        flush_timeout: 1s
-        min_size: 1024
-        max_size: 2048
+      batch: {}
     rotation:
       max_megabytes: 10
       max_days: 3
