@@ -628,7 +628,11 @@ exporters:
       enabled: false
     sending_queue:
       enabled: true
-      queue_size: 50000
+      queue_size: 25600000
+      batch:
+        flush_timeout: 5s
+        min_size: 512
+        max_size: 1024
 
 processors:
   groupbyattrs/sumologic:
@@ -639,10 +643,6 @@ processors:
   memory_limiter:
     check_interval: 5s
     limit_mib: 2048
-  batch:
-    send_batch_size: 512
-    send_batch_max_size: 512
-    timeout: 5s
   resourcedetection:
     detectors: ["ec2"]
     override: false
@@ -893,6 +893,5 @@ service:
         - sumologic/1
       processors:
         - memory_limiter
-        - batch
         - resourcedetection
         - groupbyattrs/sumologic

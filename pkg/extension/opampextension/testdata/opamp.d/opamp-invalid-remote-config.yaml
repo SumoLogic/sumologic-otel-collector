@@ -5,10 +5,8 @@ exporters:
         sending_queue:
             enabled: true
             storage: file_storage
+            batch: {}
 processors:
-    batch:
-        send_batch_size: 1024
-        timeout: 1s
     memory_limiter:
         check_interval: 5s
         limit_percentage: 75
@@ -55,7 +53,6 @@ service:
             processors:
                 - memory_limiter
                 - resourcedetection/system
-                - batch
                 - resource/0aa79379-c764-4d3d-9d66-03f6df029a07
             receivers:
                 - filelog/0aa79379-c764-4d3d-9d66-03f6df029a07
