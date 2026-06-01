@@ -30,7 +30,7 @@ func checkValidateOutput(c testContext) bool {
 
 func checkInvalidValidateOutput(c testContext) bool {
 	ok1 := assert.Equal(c.test, 1, c.commandExitCode, "Invalid file successfully validated")
-	ok2 := assert.Contains(c.test, string(c.commandOutput), "invalid keys: processorss", "Expected error message in output")
+	ok2 := assert.Contains(c.test, string(c.commandOutput), "invalid keys: exporterss", "Expected error message in output")
 	return ok1 && ok2
 }
 
