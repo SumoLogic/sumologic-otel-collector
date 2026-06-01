@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.153.0-sumo-0]
+
+### Released 2026-06-01
+
+### Changed
+
+- Move batching from batch processor to exporter [#2022]
+- chore(deps): bump opentelemetry-collector [#2099]
+
+[#2022]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2022
+[#2099]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2099
+[v0.153.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.153.0-sumo-0
+
 ## [v0.152.0-sumo-0]
 
 ### Released 2026-05-14
@@ -46,7 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#2053]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2053
 [#2060]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2060
 [#2070]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2070
-
 [v0.151.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.151.0-sumo-0
 
 ## [v0.149.0-sumo-0]
