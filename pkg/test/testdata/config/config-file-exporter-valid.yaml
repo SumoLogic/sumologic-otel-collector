@@ -7,9 +7,6 @@ receivers:
 exporters:
   file:
     path: ./output/test.log
-    sending_queue:
-      enabled: true
-      batch: {}
     rotation:
       max_megabytes: 10
       max_days: 3
