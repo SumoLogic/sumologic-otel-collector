@@ -99,7 +99,6 @@ service:
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
         - resource/linux_resource_attributes/metrics/localhost
-        - batch
       exporters:
         - sumologic
     logs/linux/localhost:
@@ -110,6 +109,5 @@ service:
         - resource/linux_resource_attributes/localhost
         - resourcedetection/system
         - resource/linux_resource_attributes/logs/localhost
-        - batch
       exporters:
         - sumologic
