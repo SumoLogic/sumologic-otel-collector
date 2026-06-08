@@ -1,1 +1,1 @@
-add missing custom sumo receivers in opamp
+add activedirectoryinv receiver in opamp
