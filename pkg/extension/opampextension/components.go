@@ -17,6 +17,8 @@ import (
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver"
+
 	"go.uber.org/multierr"
 
 	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
@@ -219,6 +221,7 @@ func Components() (
 		googlecloudspannerreceiver.NewFactory(),
 		haproxyreceiver.NewFactory(),
 		activedirectorydsreceiver.NewFactory(),
+		activedirectoryinvreceiver.NewFactory(),
 		aerospikereceiver.NewFactory(),
 		azureeventhubreceiver.NewFactory(),
 		carbonreceiver.NewFactory(),
