@@ -18,6 +18,8 @@ import (
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
 	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver"
+	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver"
 
 	"go.uber.org/multierr"
 
@@ -222,6 +224,8 @@ func Components() (
 		haproxyreceiver.NewFactory(),
 		activedirectorydsreceiver.NewFactory(),
 		activedirectoryinvreceiver.NewFactory(),
+		jobreceiver.NewFactory(),
+		rawk8seventsreceiver.NewFactory(),
 		aerospikereceiver.NewFactory(),
 		azureeventhubreceiver.NewFactory(),
 		carbonreceiver.NewFactory(),

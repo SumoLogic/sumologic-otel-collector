@@ -4,6 +4,8 @@ go 1.25.0
 
 require (
 	github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000
+	github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver v0.0.0-00010101000000-000000000000
+	github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
@@ -769,3 +771,7 @@ require (
 )
 
 replace github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000 => ../../receiver/activedirectoryinvreceiver
+
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver v0.0.0-00010101000000-000000000000 => ../../receiver/jobreceiver
+
+replace github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/rawk8seventsreceiver v0.0.0-00010101000000-000000000000 => ../../receiver/rawk8seventsreceiver
