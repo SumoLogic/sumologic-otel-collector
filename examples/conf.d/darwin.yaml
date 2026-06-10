@@ -77,7 +77,6 @@ service:
         - resource/mac_resource_attributes/localhost
         - resourcedetection/system
         - resource/mac_resource_attributes/metrics/localhost
-        - batch
       exporters:
         - sumologic
     logs/mac/localhost:
@@ -88,6 +87,5 @@ service:
         - resource/mac_resource_attributes/localhost
         - resourcedetection/system
         - resource/mac_resource_attributes/logs/localhost
-        - batch
       exporters:
         - sumologic

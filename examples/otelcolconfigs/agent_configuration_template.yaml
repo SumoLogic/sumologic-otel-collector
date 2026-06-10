@@ -39,15 +39,6 @@ processors:
     timeout: 5s
     override: false
 
-  ## The batch processor accepts spans and places them into batches grouped by node and resource
-  batch:
-    ## Number of spans after which a batch will be sent regardless of time
-    send_batch_size: 256
-    ## Never more than this many spans are being sent in a batch
-    send_batch_max_size: 512
-    ## Time duration after which a batch will be sent regardless of size
-    timeout: 5s
-
 extensions:
   health_check: {}
 exporters:
@@ -56,12 +47,19 @@ exporters:
     endpoint: HOSTNAME
     tls:
       insecure: true
+    sending_queue:
+      enabled: true
+      queue_size: 256000
+      batch:
+        flush_timeout: 5s
+        min_size: 256
+        max_size: 512
 service:
   extensions: [health_check]
   pipelines:
     traces:
       receivers: [jaeger, opencensus, otlp, zipkin]
-      processors: [memory_limiter, resourcedetection, batch]
+      processors: [memory_limiter, resourcedetection]
       exporters: [otlphttp]
   ## Following generates verbose logs with span content, useful to verify what
   ## metadata is being tagged. To enable, uncomment and add "telemetry.logs" to service below.

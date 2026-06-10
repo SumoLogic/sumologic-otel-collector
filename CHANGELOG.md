@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.153.0-sumo-0]
+
+### Released 2026-06-01
+
+### Changed
+
+- Move batching from batch processor to exporter [#2022]
+- chore(deps): bump opentelemetry-collector [#2099]
+
+[#2022]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2022
+[#2099]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2099
+[v0.153.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.153.0-sumo-0
+
+## [v0.152.0-sumo-0]
+
+### Released 2026-05-14
+
+### Changed
+
+- chore: bump the go version to oldstable(1.25.9) [#2077]
+- chore(deps): bump opentelemetry-collector [#2087]
+
+### Fixed
+
+- fix(opamp): remove expandconverter from OpAMP config provider to fix $1 pattern crash [#2076]
+
+[#2077]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2077
+[#2087]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2087
+[#2076]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2076
+[v0.152.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.152.0-sumo-0
+
+## [v0.151.0-sumo-0]
+
+### Released 2026-04-29
+
+### Changed
+
+- chore: add changelog file creation logic to renovate.sh [#2018]
+- feat: deprecate telegraf receiver and add prometheusremotewrite receiver [#2042]
+- chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.149.0 to v0.150.0 [#2049]
+- chore: enable domainControllers.autodiscovery feature gate by default [#2052]
+- feat: add and enable memorylimiterextension [#2053]
+- feat: add the signaltometrics connector [#2060]
+- chore(dep) : Bump Upstream OpenTelemetry Collector dep from v0.151.0 [#2070]
+
+[#2018]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2018
+[#2042]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2042
+[#2049]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2049
+[#2052]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2052
+[#2053]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2053
+[#2060]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2060
+[#2070]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2070
+[v0.151.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.151.0-sumo-0
+
 ## [v0.149.0-sumo-0]
 
 ### Released 2026-04-02

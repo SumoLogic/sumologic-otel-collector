@@ -1,0 +1,6 @@
+processors:
+  transform/hash_passwords:
+    log_statements:
+      - context: log
+        statements:
+          - 'replace_pattern(body, "password=([A-Za-z0-9]+)", "$1", SHA256, "password=%s")'

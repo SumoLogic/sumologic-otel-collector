@@ -4,12 +4,7 @@ receivers:
       - ./testdata/logs/test
     start_at: beginning
 
-processorss:
-  batch:
-    timeout: 1s
-    send_batch_size: 1024
-
-exporters:
+exporterss:
   file:
     path: ./output/test.log
     rotation:
@@ -21,5 +16,4 @@ service:
   pipelines:
     logs:
       receivers: [filelog]
-      processors: [batch]
       exporters: [file]
