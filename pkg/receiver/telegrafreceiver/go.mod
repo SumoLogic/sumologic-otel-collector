@@ -170,7 +170,7 @@ require (
 	github.com/seancfoley/bintree v1.3.1 // indirect
 	github.com/seancfoley/ipaddress-go v1.6.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.4 // indirect
-	github.com/shoenig/go-m1cpu v0.1.6 // indirect
+	github.com/shoenig/go-m1cpu v0.2.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sleepinggenius2/gosmi v0.4.4 // indirect
