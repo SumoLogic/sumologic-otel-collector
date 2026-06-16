@@ -238,9 +238,12 @@ func (o *opampAgent) Reload(ctx context.Context) error {
 		return err
 	}
 
-	// Reinitialize readyCh and readyOnce for the new lifecycle after reload
+	// Reinitialize lifecycle-scoped fields for the new lifecycle after reload.
 	o.readyCh = make(chan struct{})
 	o.readyOnce = sync.Once{}
+
+	o.lifetimeCtx, o.lifetimeCancel = context.WithCancel(context.Background())
+	o.componentStatusCh = make(chan *eventSourcePair, 100)
 
 	return o.Start(ctx, o.host)
 }
