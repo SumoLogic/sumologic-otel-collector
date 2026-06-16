@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.154.0-sumo-0]
+
+### Released 2026-06-16
+
+### Added
+
+- add activedirectoryinv receiver in opamp [#2105]
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2106]
+
+### Fixed
+
+- fix: upgraded deps for m5 support [#2108]
+
+[#2105]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2105
+[#2106]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2106
+[#2108]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2108
+[v0.154.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.154.0-sumo-0
+
 ## [v0.153.0-sumo-0]
 
 ### Released 2026-06-01
