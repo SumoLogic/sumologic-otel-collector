@@ -461,6 +461,52 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, o.Reload(ctx))
 }
 
+func TestReloadPreservesReadyState(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
+
+	// Simulate the service calling Ready() after pipelines start
+	assert.NoError(t, o.Ready())
+
+	// readyCh should be closed (immediately readable)
+	select {
+	case <-o.readyCh:
+	default:
+		t.Fatal("readyCh should be closed after Ready()")
+	}
+
+	// Reload the extension (simulates credential rotation)
+	assert.NoError(t, o.Reload(ctx))
+
+	// After Reload, readyCh must still be immediately readable.
+	// The service won't call Ready() again — the signal handler is still registered.
+	select {
+	case <-o.readyCh:
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("readyCh should remain closed after Reload(); onMessage would block forever")
+	}
+
+	// After Reload, lifetimeCtx must NOT be cancelled.
+	// If it remains cancelled from Shutdown, the select in onMessage takes the
+	// lifetimeCtx.Done() path and skips config reload entirely.
+	select {
+	case <-o.lifetimeCtx.Done():
+		t.Fatal("lifetimeCtx should not be cancelled after Reload(); config reloads would be skipped")
+	default:
+	}
+}
+
 func TestDefaultEndpointSetOnStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
