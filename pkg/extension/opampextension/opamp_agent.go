@@ -32,6 +32,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/extension/extensioncapabilities"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
@@ -89,7 +90,15 @@ type opampAgent struct {
 	pendingHealth         *protobufs.ComponentHealth
 	lastHealthSent        time.Time
 	healthBatchInterval   time.Duration
+
+	// readyCh is closed when all pipelines are ready (PipelineWatcher.Ready).
+	// Used to prevent sending SIGHUP before the collector's signal handler is registered.
+	readyCh   chan struct{}
+	readyOnce sync.Once
 }
+
+// Compile-time assertion that opampAgent implements PipelineWatcher.
+var _ extensioncapabilities.PipelineWatcher = (*opampAgent)(nil)
 
 // statusAggregator is an interface for tracking component status
 type statusAggregator interface {
@@ -208,12 +217,30 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+// Ready implements extensioncapabilities.PipelineWatcher.
+// It is called when all pipelines are started and the collector is ready to receive data.
+// This unblocks any pending SIGHUP signals for config reload.
+func (o *opampAgent) Ready() error {
+	o.readyOnce.Do(func() { close(o.readyCh) })
+	return nil
+}
+
+// NotReady implements extensioncapabilities.PipelineWatcher.
+// It is called when the collector is about to stop receiving data.
+func (o *opampAgent) NotReady() error {
+	return nil
+}
+
 func (o *opampAgent) Reload(ctx context.Context) error {
 	err := o.Shutdown(ctx)
 
 	if err != nil {
 		return err
 	}
+
+	// Reinitialize readyCh and readyOnce for the new lifecycle after reload
+	o.readyCh = make(chan struct{})
+	o.readyOnce = sync.Once{}
 
 	return o.Start(ctx, o.host)
 }
@@ -372,6 +399,7 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		lifetimeCtx:          lifetimeCtx,
 		lifetimeCancel:       lifetimeCancel,
 		healthBatchInterval:  30 * time.Second,
+		readyCh:              make(chan struct{}),
 	}
 
 	return agent, nil
@@ -644,6 +672,18 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		err := o.opampClient.UpdateEffectiveConfig(ctx)
 		if err != nil {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
+		}
+
+		// Wait until the collector's service is fully ready before sending SIGHUP.
+		// If we send SIGHUP before the collector registers its signal handler
+		// (which happens after setupConfigurationComponents completes), the default
+		// OS disposition terminates the process.
+		select {
+		case <-o.readyCh:
+			// Service is ready, safe to reload
+		case <-o.lifetimeCtx.Done():
+			o.logger.Warn("OpAMP agent shutting down, skipping config reload")
+			return
 		}
 
 		err = reloadCollectorConfig()
