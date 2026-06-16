@@ -461,7 +461,7 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, o.Reload(ctx))
 }
 
-func TestReloadPreservesReadyState(t *testing.T) {
+func TestLifecycleStateAfterReload(t *testing.T) {
 	d, err := os.MkdirTemp("", "opamp.d")
 	assert.NoError(t, err)
 	defer os.RemoveAll(d)
@@ -486,20 +486,34 @@ func TestReloadPreservesReadyState(t *testing.T) {
 		t.Fatal("readyCh should be closed after Ready()")
 	}
 
+	// Capture channel values before Reload to assert their post-Reload identity.
+	chReadyBefore := o.readyCh
+	chStatusBefore := o.componentStatusCh
+
 	// Reload the extension (simulates credential rotation)
 	assert.NoError(t, o.Reload(ctx))
 
-	// After Reload, readyCh must still be immediately readable.
-	// The service won't call Ready() again — the signal handler is still registered.
+	// readyCh must be the SAME channel — not replaced with a new open one.
+	// The service calls NotifyPipelineReady() exactly once per Service.Start();
+	// replacing readyCh would leave it permanently open and onMessage would block forever.
+	assert.Equal(t, chReadyBefore, o.readyCh, "Reload must not replace readyCh")
+
+	// After Reload, readyCh must still be immediately readable (closed channel).
 	select {
 	case <-o.readyCh:
-	case <-time.After(100 * time.Millisecond):
+	default:
 		t.Fatal("readyCh should remain closed after Reload(); onMessage would block forever")
 	}
 
-	// After Reload, lifetimeCtx must NOT be cancelled.
-	// If it remains cancelled from Shutdown, the select in onMessage takes the
-	// lifetimeCtx.Done() path and skips config reload entirely.
+	// componentStatusCh must be a NEW non-nil channel.
+	// Shutdown closes the old channel; keeping the closed channel would cause
+	// ComponentStatusChanged to panic on the next send.
+	assert.NotNil(t, o.componentStatusCh, "componentStatusCh must be non-nil after Reload()")
+	assert.NotEqual(t, chStatusBefore, o.componentStatusCh, "Reload must replace componentStatusCh with a fresh channel")
+
+	// lifetimeCtx must NOT be cancelled.
+	// Shutdown cancels the old context; if it remains cancelled, the select in
+	// onMessage takes the lifetimeCtx.Done() path and skips all future config reloads.
 	select {
 	case <-o.lifetimeCtx.Done():
 		t.Fatal("lifetimeCtx should not be cancelled after Reload(); config reloads would be skipped")
