@@ -674,16 +674,16 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 	}
 
 	if configChanged {
-		err := o.opampClient.UpdateEffectiveConfig(ctx)
-		if err != nil {
-			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
-		}
-
 		// Wait until the collector's service is fully ready before sending SIGHUP.
 		// If we send SIGHUP before the collector registers its signal handler
 		// (which happens after setupConfigurationComponents completes), the default
 		// OS disposition terminates the process.
 		<-o.readyCh
+
+		err := o.opampClient.UpdateEffectiveConfig(ctx)
+		if err != nil {
+			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))
+		}
 
 		err = reloadCollectorConfig()
 		if err != nil {
