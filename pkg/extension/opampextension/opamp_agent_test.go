@@ -723,9 +723,15 @@ func TestOnMessageUnblocksOnShutdownBeforeReady(t *testing.T) {
 		close(done)
 	}()
 
-	// Give onMessage time to reach the readyCh select and block.
-	time.Sleep(20 * time.Millisecond)
-
+	// Wait for a bit to ensure onMessage has not returned yet (it should be blocked on readyCh).
+	assert.Never(t, func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			return false
+		}
+	}, 200*time.Millisecond, 10*time.Millisecond, "onMessage should be blocked before lifetimeCtx is cancelled")
 	// Simulate Shutdown() cancelling lifetimeCtx before Ready() is ever called
 	// (e.g., a pipeline component fails to start or SIGTERM arrives during startup).
 	o.lifetimeCancel()
