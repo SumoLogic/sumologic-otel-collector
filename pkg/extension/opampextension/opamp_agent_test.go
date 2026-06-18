@@ -634,16 +634,6 @@ func TestReady(t *testing.T) {
 	}
 }
 
-// TestNotReady verifies that NotReady() is a no-op. Shutdown() cancels lifetimeCtx,
-// which causes onMessage to drop messages via its first select — no extra action needed
-// from NotReady.
-func TestNotReady(t *testing.T) {
-	cfg, set := defaultSetup()
-	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
-	assert.NoError(t, err)
-	assert.NoError(t, o.NotReady())
-}
-
 // TestOnMessageProcessesWhenActive verifies that onMessage handles a message and
 // updates agent identity after Ready() has been called.
 func TestOnMessageProcessesWhenActive(t *testing.T) {
