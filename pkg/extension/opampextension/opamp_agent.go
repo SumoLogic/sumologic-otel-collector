@@ -630,11 +630,22 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 }
 
 func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
+	// drop messages once shutdown has begun
 	select {
 	case <-o.lifetimeCtx.Done():
 		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
 		return
 	default:
+	}
+
+	// Wait for pipelines to be ready. While we are waiting for pipelines to be ready,
+	// sometimes pipeline start might fail and we never get Ready, in that case we should not block forever,
+	// so we also listen to lifetimeCtx.Done()
+	select {
+	case <-o.readyCh:
+	case <-o.lifetimeCtx.Done():
+		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
+		return
 	}
 
 	configChanged := false
@@ -674,12 +685,6 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 	}
 
 	if configChanged {
-		// Wait until the collector's service is fully ready before sending SIGHUP.
-		// If we send SIGHUP before the collector registers its signal handler
-		// (which happens after setupConfigurationComponents completes), the default
-		// OS disposition terminates the process.
-		<-o.readyCh
-
 		err := o.opampClient.UpdateEffectiveConfig(ctx)
 		if err != nil {
 			o.logger.Error("Failed to update OpAMP agent effective configuration", zap.Error(err))

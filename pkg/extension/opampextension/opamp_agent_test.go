@@ -494,9 +494,10 @@ func TestLifecycleStateAfterReload(t *testing.T) {
 	// Reload the extension (simulates credential rotation)
 	assert.NoError(t, o.Reload(ctx))
 
-	// readyCh must be the SAME channel — not replaced with a new open one.
-	// The service calls NotifyPipelineReady() exactly once per Service.Start();
-	// replacing readyCh would leave it permanently open and onMessage would block forever.
+	// readyCh must be the SAME already-closed channel — not replaced with a new open one.
+	// Reload() is called for credential rotation only; the collector service does not
+	// call Ready() again after an internal reload. Resetting readyCh to a fresh open
+	// channel would leave onMessage blocked forever waiting for a Ready() that never comes.
 	assert.Equal(t, chReadyBefore, o.readyCh, "Reload must not replace readyCh")
 
 	// After Reload, readyCh must still be immediately readable (closed channel).
@@ -609,14 +610,50 @@ func TestHealthReportingDisabled(t *testing.T) {
 	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth == 0)
 }
 
-// TestOnMessageProcessesWhenActive verifies that onMessage handles an
-// AgentIdentification message and updates the agent identity while the
-// lifetime context is still active (i.e., before Shutdown).
+// TestReady verifies that Ready() closes readyCh (unblocking any waiting onMessage
+// calls) and that readyCh starts open on a fresh agent.
+func TestReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// readyCh must be open before Ready() is called.
+	select {
+	case <-o.readyCh:
+		t.Fatal("readyCh should be open before Ready() is called")
+	default:
+	}
+
+	assert.NoError(t, o.Ready())
+
+	// readyCh must be closed after Ready() is called.
+	select {
+	case <-o.readyCh:
+	default:
+		t.Fatal("readyCh should be closed after Ready()")
+	}
+}
+
+// TestNotReady verifies that NotReady() is a no-op. Shutdown() cancels lifetimeCtx,
+// which causes onMessage to drop messages via its first select — no extra action needed
+// from NotReady.
+func TestNotReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+	assert.NoError(t, o.NotReady())
+}
+
+// TestOnMessageProcessesWhenActive verifies that onMessage handles a message and
+// updates agent identity after Ready() has been called.
 func TestOnMessageProcessesWhenActive(t *testing.T) {
 	cfg, set := defaultSetup()
 	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
 	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
 	assert.NoError(t, err)
+
+	// onMessage now waits for readyCh at the top before processing any message.
+	assert.NoError(t, o.Ready())
 
 	originalId := o.instanceId
 	newId := ulid.Make()
@@ -631,8 +668,90 @@ func TestOnMessageProcessesWhenActive(t *testing.T) {
 	assert.NotEqual(t, originalId, o.instanceId)
 }
 
-// TestOnMessageDropsWhenShutdown verifies that onMessage is a no-op once the
-// lifetime context has been cancelled (i.e., after Shutdown has been called).
+// TestOnMessageBlocksUntilReady verifies that onMessage blocks when readyCh is open
+// (i.e., before pipelines are ready) and only processes the message once Ready() fires.
+func TestOnMessageBlocksUntilReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	newId := ulid.Make()
+
+	done := make(chan struct{})
+	go func() {
+		o.onMessage(context.Background(), &types.MessageData{
+			AgentIdentification: &protobufs.AgentIdentification{
+				NewInstanceUid: newId.String(),
+			},
+		})
+		close(done)
+	}()
+
+	// Give onMessage time to reach the readyCh select and block.
+	time.Sleep(20 * time.Millisecond)
+	select {
+	case <-done:
+		t.Fatal("onMessage should be blocked waiting for Ready()")
+	default:
+	}
+
+	// Unblock by signalling Ready.
+	assert.NoError(t, o.Ready())
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("onMessage did not unblock after Ready() was called")
+	}
+
+	assert.Equal(t, newId, o.instanceId, "onMessage should process message after Ready()")
+}
+
+// TestOnMessageUnblocksOnShutdownBeforeReady verifies that onMessage returns cleanly
+// when Shutdown cancels lifetimeCtx while onMessage is blocked waiting for Ready().
+// Without the lifetimeCtx.Done() case in the second select, opampClient.Stop() would
+// wait for this goroutine forever and Shutdown() would hang.
+func TestOnMessageUnblocksOnShutdownBeforeReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	originalId := o.instanceId
+	newId := ulid.Make()
+
+	done := make(chan struct{})
+	go func() {
+		o.onMessage(context.Background(), &types.MessageData{
+			AgentIdentification: &protobufs.AgentIdentification{
+				NewInstanceUid: newId.String(),
+			},
+		})
+		close(done)
+	}()
+
+	// Give onMessage time to reach the readyCh select and block.
+	time.Sleep(20 * time.Millisecond)
+
+	// Simulate Shutdown() cancelling lifetimeCtx before Ready() is ever called
+	// (e.g., a pipeline component fails to start or SIGTERM arrives during startup).
+	o.lifetimeCancel()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("onMessage blocked after lifetimeCtx cancelled — Shutdown() would hang indefinitely")
+	}
+
+	// Message must not have been processed.
+	assert.Equal(t, originalId, o.instanceId, "onMessage must drop the message when shutdown fires before Ready()")
+}
+
+// TestOnMessageDropsWhenShutdown verifies that onMessage is a no-op when
+// lifetimeCtx is already cancelled before onMessage is called (i.e., Shutdown
+// completed before the opamp client delivered the message). This exercises the
+// first non-blocking select in onMessage.
 func TestOnMessageDropsWhenShutdown(t *testing.T) {
 	cfg, set := defaultSetup()
 	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
@@ -641,7 +760,9 @@ func TestOnMessageDropsWhenShutdown(t *testing.T) {
 
 	originalId := o.instanceId
 
-	// Cancel the lifetime context — simulates Shutdown() being called.
+	// Cancel the lifetime context — simulates Shutdown() having already run.
+	// No Ready() call needed: the first select catches the cancelled context
+	// before the code reaches the readyCh wait.
 	o.lifetimeCancel()
 
 	newId := ulid.Make()
