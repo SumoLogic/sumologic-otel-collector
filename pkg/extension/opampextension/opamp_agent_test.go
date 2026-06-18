@@ -678,13 +678,15 @@ func TestOnMessageBlocksUntilReady(t *testing.T) {
 		close(done)
 	}()
 
-	// Give onMessage time to reach the readyCh select and block.
-	time.Sleep(20 * time.Millisecond)
-	select {
-	case <-done:
-		t.Fatal("onMessage should be blocked waiting for Ready()")
-	default:
-	}
+	// Wait until onMessage is *still* blocked waiting for Ready().
+	assert.Never(t, func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			return false
+		}
+	}, 200*time.Millisecond, 10*time.Millisecond, "onMessage should be blocked waiting for Ready()")
 
 	// Unblock by signalling Ready.
 	assert.NoError(t, o.Ready())
