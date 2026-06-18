@@ -93,8 +93,7 @@ type opampAgent struct {
 
 	// readyCh is closed when all pipelines are ready (PipelineWatcher.Ready).
 	// Used to prevent sending SIGHUP before the collector's signal handler is registered.
-	readyCh   chan struct{}
-	readyOnce sync.Once
+	readyCh chan struct{}
 }
 
 // Compile-time assertion that opampAgent implements PipelineWatcher.
@@ -221,7 +220,7 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 // It is called when all pipelines are started and the collector is ready to receive data.
 // This unblocks any pending SIGHUP signals for config reload.
 func (o *opampAgent) Ready() error {
-	o.readyOnce.Do(func() { close(o.readyCh) })
+	close(o.readyCh)
 	return nil
 }
 
@@ -631,6 +630,13 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 }
 
 func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
+	select {
+	case <-o.lifetimeCtx.Done():
+		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
+		return
+	default:
+	}
+
 	configChanged := false
 
 	if msg.RemoteConfig != nil {
@@ -677,13 +683,7 @@ func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
 		// If we send SIGHUP before the collector registers its signal handler
 		// (which happens after setupConfigurationComponents completes), the default
 		// OS disposition terminates the process.
-		select {
-		case <-o.readyCh:
-			// Service is ready, safe to reload
-		case <-o.lifetimeCtx.Done():
-			o.logger.Warn("OpAMP agent shutting down, skipping config reload")
-			return
-		}
+		<-o.readyCh
 
 		err = reloadCollectorConfig()
 		if err != nil {

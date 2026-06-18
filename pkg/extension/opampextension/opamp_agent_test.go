@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"github.com/open-telemetry/opamp-go/client/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
@@ -606,4 +607,49 @@ func TestHealthReportingDisabled(t *testing.T) {
 	// Verify capability does not include health reporting
 	capabilities := o.getAgentCapabilities()
 	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth == 0)
+}
+
+// TestOnMessageProcessesWhenActive verifies that onMessage handles an
+// AgentIdentification message and updates the agent identity while the
+// lifetime context is still active (i.e., before Shutdown).
+func TestOnMessageProcessesWhenActive(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	originalId := o.instanceId
+	newId := ulid.Make()
+
+	o.onMessage(context.Background(), &types.MessageData{
+		AgentIdentification: &protobufs.AgentIdentification{
+			NewInstanceUid: newId.String(),
+		},
+	})
+
+	assert.Equal(t, newId, o.instanceId, "onMessage should update agent identity while lifetime context is active")
+	assert.NotEqual(t, originalId, o.instanceId)
+}
+
+// TestOnMessageDropsWhenShutdown verifies that onMessage is a no-op once the
+// lifetime context has been cancelled (i.e., after Shutdown has been called).
+func TestOnMessageDropsWhenShutdown(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	originalId := o.instanceId
+
+	// Cancel the lifetime context — simulates Shutdown() being called.
+	o.lifetimeCancel()
+
+	newId := ulid.Make()
+	o.onMessage(context.Background(), &types.MessageData{
+		AgentIdentification: &protobufs.AgentIdentification{
+			NewInstanceUid: newId.String(),
+		},
+	})
+
+	assert.Equal(t, originalId, o.instanceId, "onMessage should drop the message and not update identity after shutdown")
 }
