@@ -216,11 +216,14 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// Ready implements extensioncapabilities.PipelineWatcher.
-// It is called when all pipelines are started and the collector is ready to receive data.
-// This unblocks any pending SIGHUP signals for config reload.
 func (o *opampAgent) Ready() error {
-	close(o.readyCh)
+	// Make Ready idempotent (avoid panicking on multiple calls).
+	select {
+	case <-o.readyCh:
+		// already closed
+	default:
+		close(o.readyCh)
+	}
 	return nil
 }
 
