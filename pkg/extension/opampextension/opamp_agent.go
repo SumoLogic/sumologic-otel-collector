@@ -633,12 +633,10 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 }
 
 func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
-	// drop messages once shutdown has begun
-	select {
-	case <-o.lifetimeCtx.Done():
+	// Drop messages once shutdown has begun.
+	if o.lifetimeCtx.Err() != nil {
 		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
 		return
-	default:
 	}
 
 	// Wait for pipelines to be ready. While we are waiting for pipelines to be ready,
