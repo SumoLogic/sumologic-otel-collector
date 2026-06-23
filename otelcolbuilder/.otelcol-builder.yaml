@@ -223,6 +223,6 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
-  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.0.0-20260623080414-20f36102b984
-  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/pkg/stanza v0.0.0-20260623080414-20f36102b984
+  - github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.0.0-20260623093313-1cfda5f57c34
+  - github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza => github.com/pankaj101A/pankaj-opentelemetry-collector-contrib/pkg/stanza v0.0.0-20260623093313-1cfda5f57c34
 
