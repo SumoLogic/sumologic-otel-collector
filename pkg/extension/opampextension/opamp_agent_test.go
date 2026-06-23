@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"github.com/open-telemetry/opamp-go/client/types"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
@@ -461,6 +462,67 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, o.Reload(ctx))
 }
 
+func TestLifecycleStateAfterReload(t *testing.T) {
+	d, err := os.MkdirTemp("", "opamp.d")
+	assert.NoError(t, err)
+	defer os.RemoveAll(d)
+
+	cfg := createDefaultConfig().(*Config)
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	cfg.RemoteConfigurationDirectory = d
+	set := extensiontest.NewNopSettings(extensiontest.NopType)
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	ctx := context.Background()
+	assert.NoError(t, o.Start(ctx, componenttest.NewNopHost()))
+
+	// Simulate the service calling Ready() after pipelines start
+	assert.NoError(t, o.Ready())
+
+	// readyCh should be closed (immediately readable)
+	select {
+	case <-o.readyCh:
+	default:
+		t.Fatal("readyCh should be closed after Ready()")
+	}
+
+	// Capture channel values before Reload to assert their post-Reload identity.
+	chReadyBefore := o.readyCh
+	chStatusBefore := o.componentStatusCh
+
+	// Reload the extension (simulates credential rotation)
+	assert.NoError(t, o.Reload(ctx))
+
+	// readyCh must be the SAME already-closed channel — not replaced with a new open one.
+	// Reload() is called for credential rotation only; the collector service does not
+	// call Ready() again after an internal reload. Resetting readyCh to a fresh open
+	// channel would leave onMessage blocked forever waiting for a Ready() that never comes.
+	assert.Equal(t, chReadyBefore, o.readyCh, "Reload must not replace readyCh")
+
+	// After Reload, readyCh must still be immediately readable (closed channel).
+	select {
+	case <-o.readyCh:
+	default:
+		t.Fatal("readyCh should remain closed after Reload(); onMessage would block forever")
+	}
+
+	// componentStatusCh must be a NEW non-nil channel.
+	// Shutdown closes the old channel; keeping the closed channel would cause
+	// ComponentStatusChanged to panic on the next send.
+	assert.NotNil(t, o.componentStatusCh, "componentStatusCh must be non-nil after Reload()")
+	assert.NotEqual(t, chStatusBefore, o.componentStatusCh, "Reload must replace componentStatusCh with a fresh channel")
+
+	// lifetimeCtx must NOT be cancelled.
+	// Shutdown cancels the old context; if it remains cancelled, the select in
+	// onMessage takes the lifetimeCtx.Done() path and skips all future config reloads.
+	select {
+	case <-o.lifetimeCtx.Done():
+		t.Fatal("lifetimeCtx should not be cancelled after Reload(); config reloads would be skipped")
+	default:
+	}
+}
+
 func TestDefaultEndpointSetOnStart(t *testing.T) {
 	cfg := createDefaultConfig().(*Config)
 	set := extensiontest.NewNopSettings(extensiontest.NopType)
@@ -546,4 +608,167 @@ func TestHealthReportingDisabled(t *testing.T) {
 	// Verify capability does not include health reporting
 	capabilities := o.getAgentCapabilities()
 	assert.True(t, capabilities&protobufs.AgentCapabilities_AgentCapabilities_ReportsHealth == 0)
+}
+
+// TestReady verifies that Ready() closes readyCh (unblocking any waiting onMessage
+// calls) and that readyCh starts open on a fresh agent.
+func TestReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// readyCh must be open before Ready() is called.
+	select {
+	case <-o.readyCh:
+		t.Fatal("readyCh should be open before Ready() is called")
+	default:
+	}
+
+	assert.NoError(t, o.Ready())
+
+	// readyCh must be closed after Ready() is called.
+	select {
+	case <-o.readyCh:
+	default:
+		t.Fatal("readyCh should be closed after Ready()")
+	}
+}
+
+// TestOnMessageProcessesWhenActive verifies that onMessage handles a message and
+// updates agent identity after Ready() has been called.
+func TestOnMessageProcessesWhenActive(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	// onMessage now waits for readyCh at the top before processing any message.
+	assert.NoError(t, o.Ready())
+
+	originalId := o.instanceId
+	newId := ulid.Make()
+
+	o.onMessage(context.Background(), &types.MessageData{
+		AgentIdentification: &protobufs.AgentIdentification{
+			NewInstanceUid: newId.String(),
+		},
+	})
+
+	assert.Equal(t, newId, o.instanceId, "onMessage should update agent identity while lifetime context is active")
+	assert.NotEqual(t, originalId, o.instanceId)
+}
+
+// TestOnMessageBlocksUntilReady verifies that onMessage blocks when readyCh is open
+// (i.e., before pipelines are ready) and only processes the message once Ready() fires.
+func TestOnMessageBlocksUntilReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	newId := ulid.Make()
+
+	done := make(chan struct{})
+	go func() {
+		o.onMessage(context.Background(), &types.MessageData{
+			AgentIdentification: &protobufs.AgentIdentification{
+				NewInstanceUid: newId.String(),
+			},
+		})
+		close(done)
+	}()
+
+	// Wait until onMessage is *still* blocked waiting for Ready().
+	assert.Never(t, func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			return false
+		}
+	}, 200*time.Millisecond, 10*time.Millisecond, "onMessage should be blocked waiting for Ready()")
+
+	// Unblock by signalling Ready.
+	assert.NoError(t, o.Ready())
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("onMessage did not unblock after Ready() was called")
+	}
+
+	assert.Equal(t, newId, o.instanceId, "onMessage should process message after Ready()")
+}
+
+// TestOnMessageUnblocksOnShutdownBeforeReady verifies that onMessage returns cleanly
+// when Shutdown cancels lifetimeCtx while onMessage is blocked waiting for Ready().
+// Without the lifetimeCtx.Done() case in the second select, opampClient.Stop() would
+// wait for this goroutine forever and Shutdown() would hang.
+func TestOnMessageUnblocksOnShutdownBeforeReady(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	originalId := o.instanceId
+	newId := ulid.Make()
+
+	done := make(chan struct{})
+	go func() {
+		o.onMessage(context.Background(), &types.MessageData{
+			AgentIdentification: &protobufs.AgentIdentification{
+				NewInstanceUid: newId.String(),
+			},
+		})
+		close(done)
+	}()
+
+	// Wait for a bit to ensure onMessage has not returned yet (it should be blocked on readyCh).
+	assert.Never(t, func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			return false
+		}
+	}, 200*time.Millisecond, 10*time.Millisecond, "onMessage should be blocked before lifetimeCtx is cancelled")
+	// Simulate Shutdown() cancelling lifetimeCtx before Ready() is ever called
+	// (e.g., a pipeline component fails to start or SIGTERM arrives during startup).
+	o.lifetimeCancel()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("onMessage blocked after lifetimeCtx cancelled — Shutdown() would hang indefinitely")
+	}
+
+	// Message must not have been processed.
+	assert.Equal(t, originalId, o.instanceId, "onMessage must drop the message when shutdown fires before Ready()")
+}
+
+// TestOnMessageDropsWhenShutdown verifies that onMessage is a no-op when
+// lifetimeCtx is already cancelled before onMessage is called (i.e., Shutdown
+// completed before the opamp client delivered the message). This exercises the
+// first non-blocking select in onMessage.
+func TestOnMessageDropsWhenShutdown(t *testing.T) {
+	cfg, set := defaultSetup()
+	cfg.ClientConfig.Auth = configoptional.None[configauth.Config]()
+	o, err := newOpampAgent(cfg, set.Logger, set.BuildInfo, set.Resource)
+	assert.NoError(t, err)
+
+	originalId := o.instanceId
+
+	// Cancel the lifetime context — simulates Shutdown() having already run.
+	// No Ready() call needed: the first select catches the cancelled context
+	// before the code reaches the readyCh wait.
+	o.lifetimeCancel()
+
+	newId := ulid.Make()
+	o.onMessage(context.Background(), &types.MessageData{
+		AgentIdentification: &protobufs.AgentIdentification{
+			NewInstanceUid: newId.String(),
+		},
+	})
+
+	assert.Equal(t, originalId, o.instanceId, "onMessage should drop the message and not update identity after shutdown")
 }
