@@ -32,6 +32,7 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/extension/extensioncapabilities"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
@@ -89,7 +90,14 @@ type opampAgent struct {
 	pendingHealth         *protobufs.ComponentHealth
 	lastHealthSent        time.Time
 	healthBatchInterval   time.Duration
+
+	// readyCh is closed when all pipelines are ready (PipelineWatcher.Ready).
+	// Used to prevent sending SIGHUP before the collector's signal handler is registered.
+	readyCh chan struct{}
 }
+
+// Compile-time assertion that opampAgent implements PipelineWatcher.
+var _ extensioncapabilities.PipelineWatcher = (*opampAgent)(nil)
 
 // statusAggregator is an interface for tracking component status
 type statusAggregator interface {
@@ -208,12 +216,32 @@ func (o *opampAgent) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+func (o *opampAgent) Ready() error {
+	// Make Ready idempotent (avoid panicking on multiple calls).
+	select {
+	case <-o.readyCh:
+		// already closed
+	default:
+		close(o.readyCh)
+	}
+	return nil
+}
+
+// NotReady implements extensioncapabilities.PipelineWatcher.
+// It is called when the collector is about to stop receiving data.
+func (o *opampAgent) NotReady() error {
+	return nil
+}
+
 func (o *opampAgent) Reload(ctx context.Context) error {
 	err := o.Shutdown(ctx)
 
 	if err != nil {
 		return err
 	}
+
+	o.lifetimeCtx, o.lifetimeCancel = context.WithCancel(context.Background())
+	o.componentStatusCh = make(chan *eventSourcePair, 100)
 
 	return o.Start(ctx, o.host)
 }
@@ -372,6 +400,7 @@ func newOpampAgent(cfg *Config, logger *zap.Logger, build component.BuildInfo, r
 		lifetimeCtx:          lifetimeCtx,
 		lifetimeCancel:       lifetimeCancel,
 		healthBatchInterval:  30 * time.Second,
+		readyCh:              make(chan struct{}),
 	}
 
 	return agent, nil
@@ -604,6 +633,22 @@ func (o *opampAgent) applyRemoteConfig(config *protobufs.AgentRemoteConfig) (con
 }
 
 func (o *opampAgent) onMessage(ctx context.Context, msg *types.MessageData) {
+	// Drop messages once shutdown has begun.
+	if o.lifetimeCtx.Err() != nil {
+		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
+		return
+	}
+
+	// Wait for pipelines to be ready. While we are waiting for pipelines to be ready,
+	// sometimes pipeline start might fail and we never get Ready, in that case we should not block forever,
+	// so we also listen to lifetimeCtx.Done()
+	select {
+	case <-o.readyCh:
+	case <-o.lifetimeCtx.Done():
+		o.logger.Info("OpAMP agent is shutting down, dropping incoming message")
+		return
+	}
+
 	configChanged := false
 
 	if msg.RemoteConfig != nil {
