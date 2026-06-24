@@ -236,7 +236,7 @@ jobs:
           echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_ENV"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
 
-      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb
+      - uses: actions/cache/restore@2c8a9bd7457de244a408f35966fab2fb45fda9c8
         with:
           path: |
             ${{ env.GOMODCACHE }}/cache
@@ -245,7 +245,7 @@ jobs:
           restore-keys: |
             go-test-${{ env.GO_VERSION }}-${{matrix.platform}}-
 
-      - uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb
+      - uses: actions/cache/restore@2c8a9bd7457de244a408f35966fab2fb45fda9c8
         with:
           path: |
             /home/runner/.cache/staticcheck
