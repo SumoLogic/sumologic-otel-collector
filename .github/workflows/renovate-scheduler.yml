@@ -44,7 +44,7 @@ jobs:
 
       - name: Renovate run (dry-run)
         if: inputs.dryRun != 'none' && inputs.dryRun != ''
-        uses: renovatebot/github-action@v46.1.16
+        uses: renovatebot/github-action@v46.1.17
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
@@ -56,7 +56,7 @@ jobs:
 
       - name: Renovate run
         if: inputs.dryRun == 'none' || inputs.dryRun == ''
-        uses: renovatebot/github-action@v46.1.16
+        uses: renovatebot/github-action@v46.1.17
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
