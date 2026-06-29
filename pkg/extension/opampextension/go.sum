@@ -1193,6 +1193,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollproces
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor v0.155.0/go.mod h1:XbEdIhZbb2c2syIzCCyrFGTzeiu7f8bG87KXQhF6RlA=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.155.0 h1:fnF+u0dXwApD1yi/8YThuqP5BFEB/unVQTeSeSgV240=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.155.0/go.mod h1:DvbG78+l1196caRUcnaUejOVvS9FzdYhU7DCIQQ0E34=
+github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectoryinvreceiver v0.155.0 h1:WhJQmz63wXqptW4iO3Nj9pp8VqywGD9zuaNwVyH7A7U=
+github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectoryinvreceiver v0.155.0/go.mod h1:FPKPlkIrUNnquN5VAWhKgNzxN8G0KNHLOIL+5qKgD/M=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver v0.155.0 h1:ALBq+/j6SjH3dew02LIARc97SNyeljR2VM2PXB/JPXY=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver v0.155.0/go.mod h1:YUoV/lOQ7RiHg7rjsoa+sadXtCRLPVoEV2tX/gTJSfQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver v0.155.0 h1:CswJtRZPjE4hvcPqQFyZXrtTY+8L1CWVleSAERpj98I=
