@@ -72,8 +72,6 @@ receivers:
     path: ./../pkg/receiver/rawk8seventsreceiver
   - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/jobreceiver v0.0.0-00010101000000-000000000000
     path: ./../pkg/receiver/jobreceiver
-  - gomod: github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000
-    path: ./../pkg/receiver/activedirectoryinvreceiver
   # Since include-code was removed we need to manually add all core components that we want to include:
   # https://github.com/open-telemetry/opentelemetry-collector/pull/4616
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.155.0
