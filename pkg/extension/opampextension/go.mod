@@ -3,7 +3,6 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/extension/opamp
 go 1.25.0
 
 require (
-	github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/rawbytes v0.1.0
@@ -61,6 +60,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.155.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor v0.155.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver v0.155.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectoryinvreceiver v0.155.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver v0.155.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver v0.155.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscloudwatchreceiver v0.155.0
@@ -769,5 +769,3 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	skywalking.apache.org/repo/goapi v0.0.0-20240104145220-ba7202308dd4 // indirect
 )
-
-replace github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver v0.0.0-00010101000000-000000000000 => ../../receiver/activedirectoryinvreceiver

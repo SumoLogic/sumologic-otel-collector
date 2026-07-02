@@ -17,8 +17,6 @@ import (
 	"go.opentelemetry.io/collector/receiver/nopreceiver"
 	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
-	"github.com/SumoLogic/sumologic-otel-collector/pkg/receiver/activedirectoryinvreceiver"
-
 	"go.uber.org/multierr"
 
 	"go.opentelemetry.io/collector/service/telemetry/otelconftelemetry"
@@ -73,6 +71,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/unrollprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectorydsreceiver"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/activedirectoryinvreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/aerospikereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscloudwatchreceiver"
