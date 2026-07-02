@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.155.0-sumo-0]
+
+### Released 2026-07-02
+
+### Added
+
+- feat: remove local activedirectoryinvreceiver and use upstream version [#2121]
+
+### Changed
+
+- Fix: race condition in opamp startup [#2110]
+- chore(deps): bump opentelemetry-collector [#2117]
+
+[#2121]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2121
+[#2110]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2110
+[#2117]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2117
+[v0.155.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.155.0-sumo-0
+
 ## [v0.154.0-sumo-0]
 
 ### Released 2026-06-16
