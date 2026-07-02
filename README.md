@@ -156,7 +156,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [mac_arm64]: ./docs/installation.md#macos-on-arm64-apple-m1-x86-64
 [win_amd64]: ./docs/installation.md#windows
 [activedirectorydsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.155.0/receiver/activedirectorydsreceiver
-[activedirectoryinvreceiver]: ./pkg/receiver/activedirectoryinvreceiver
+[activedirectoryinvreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.155.0/receiver/activedirectoryinvreceiver
 [aerospikereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.155.0/receiver/aerospikereceiver
 [apachereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.155.0/receiver/apachereceiver
 [awscloudwatchreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.155.0/receiver/awscloudwatchreceiver
