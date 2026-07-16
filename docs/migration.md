@@ -1552,7 +1552,7 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-> **Note:** The Telegraf receiver has been removed from this distribution.
+> __Note:__ The Telegraf receiver has been removed from this distribution.
 > The migration examples below are preserved for historical reference only.
 > Use the [OTLP receiver](https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver/otlpreceiver)
 > or other native OTel receivers instead.
@@ -1694,7 +1694,7 @@ It is recommended to use dedicated Sumo Logic app for Host Metrics for OpenTelem
 
 #### Using Telegraf Receiver
 
-> **Note:** The Telegraf receiver has been removed from this distribution.
+> __Note:__ The Telegraf receiver has been removed from this distribution.
 > The migration examples below are preserved for historical reference only.
 > Use the [Host Metrics receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/hostmetricsreceiver) instead.
 
