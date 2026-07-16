@@ -26,7 +26,7 @@ environment:
 
 1. Download & install the latest [Go MSI][go-msi].
 
-1. Download & install [Make for Windows][make-for-windows].
+1. Download & install Make for Windows.
 
 1. Open `cmd` and add make to the user PATH:
 
@@ -156,7 +156,6 @@ To contribute you will need to ensure you have the following setup:
   ```
 
 [go-msi]: https://go.dev/dl/
-[make-for-windows]: https://gnuwin32.sourceforge.net/downlinks/make.php
 [git-for-windows]: https://git-scm.com/download/win
 
 ## Changelog management
