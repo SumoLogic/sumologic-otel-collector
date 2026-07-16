@@ -213,6 +213,9 @@ replaces:
   # ----------------------------------------------------------------------------
   # Needed for telegrafreceiver
   - github.com/influxdata/telegraf => github.com/SumoLogic/telegraf v1.34.2-sumo-1
+  # go-connections v0.7.0 removed the cross-platform sockets.DialPipe function,
+  # but docker/docker@v28.0.4+incompatible still calls it in client/client.go:466.
+  - github.com/docker/go-connections v0.7.0 => github.com/docker/go-connections v0.6.0
   # This is to make sure we build the with the sumologicextension from the tree.
   # The reason this is needed is that sumologicexporter depends on sumologicextension in its go.mod.
   # We add a dependency in the builder config in this file but only for a particular (placeholder)
