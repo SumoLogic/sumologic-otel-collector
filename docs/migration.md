@@ -72,7 +72,7 @@ You should manually migrate your Sources to an OpenTelemetry Configuration.
     - [Source Category](#source-category-4)
     - [Metadata](#metadata-1)
   - [Host Metrics Source](#host-metrics-source)
-    - [Using Telegraf Receiver](#using-telegraf-receiver)
+    - [Using Telegraf Receiver (Removed)](#using-telegraf-receiver)
       - [Overall Example](#overall-example-4)
       - [Name](#name-6)
       - [Description](#description-6)
@@ -1552,7 +1552,12 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source
 
-For the Streaming Metrics Source we are using [the Telegraf receiver][telegrafreceiver]
+> **Note:** The Telegraf receiver has been removed from this distribution.
+> The migration examples below are preserved for historical reference only.
+> Use the [OTLP receiver](https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver/otlpreceiver)
+> or other native OTel receivers instead.
+
+For the Streaming Metrics Source we were previously using the Telegraf receiver
 with [socket_listener plugin][telegraf-socket_listener].
 
 #### Overall example
@@ -1686,11 +1691,14 @@ Please refer to [the Fields/Metadata section of Common configuration](#fields).
 ### Host Metrics Source
 
 It is recommended to use dedicated Sumo Logic app for Host Metrics for OpenTelemetry Collector.
-In order to use old dashboards, please follow the [Using Telegraf Receiver](#using-telegraf-receiver) section.
 
 #### Using Telegraf Receiver
 
-The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
+> **Note:** The Telegraf receiver has been removed from this distribution.
+> The migration examples below are preserved for historical reference only.
+> Use the [Host Metrics receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/hostmetricsreceiver) instead.
+
+The equivalent of the Host Metrics Source was previously the Telegraf receiver with appropriate plugins.
 
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
 See [this document](comparison.md#host-metrics) to learn more.__
@@ -2445,7 +2453,7 @@ Script Source is not supported by the OpenTelemetry Collector.
 
 ### Streaming Metrics Source (StreamingMetrics)
 
-The equivalent of the Streaming Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
+The equivalent of the Streaming Metrics Source was previously the Telegraf receiver (now removed) with appropriate plugins.
 More useful information can be found in [Streaming Metrics Source for Cloud Based Management](#streaming-metrics-source).
 
 | The Installed Collector Parameter | The OpenTelemetry Collector Key                                                                                 |
@@ -2459,7 +2467,7 @@ More useful information can be found in [Streaming Metrics Source for Cloud Base
 
 ### Host Metrics Source (SystemStats)
 
-The equivalent of the Host Metrics Source is [the telegraf receiver][telegrafreceiver] with appropiate plugins.
+The equivalent of the Host Metrics Source was previously the Telegraf receiver (now removed) with appropriate plugins.
 More useful information can be found in [Host Metrics Source for Cloud Based Management](#host-metrics-source).
 
 __Note: The are differences between the Installed Collector and the Openelemetry Collector host metrics.
@@ -2515,7 +2523,6 @@ Windows Active Directory Source is not supported by the OpenTelemetry Collector.
 [common-parameters]: https://www.sumologic.com/help/docs/send-data/use-json-configure-sources#common-parameters-for-log-source-types
 [source-templates]: ../pkg/processor/sourceprocessor//README.md#source-templates
 [syslogparser]: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/operators/syslog_parser.md
-[telegrafreceiver]: ../pkg/receiver/telegrafreceiver/README.md
 [telegraf-socket_listener]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs/socket_listener#socket-listener-input-plugin
 [telegraf-input-formats]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/parsers
 [telegraf-input-plugins]: https://github.com/SumoLogic/telegraf/tree/v1.24.3-sumo-4/plugins/inputs

@@ -128,7 +128,6 @@ use (
         ./pkg/processor/metricfrequencyprocessor
         ./pkg/processor/sourceprocessor
         ./pkg/processor/sumologicsyslogprocessor
-        ./pkg/receiver/telegrafreceiver
         ./pkg/configprovider/globprovider
         ./pkg/configprovider/opampprovider
         ./pkg/tools/udpdemux

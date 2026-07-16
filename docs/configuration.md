@@ -842,7 +842,7 @@ service:
   pipelines:
     metrics:
       receivers:
-        - telegraf
+        - hostmetrics
       processors:
         - metricstransform
       exporters:

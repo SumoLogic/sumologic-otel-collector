@@ -131,7 +131,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                 [statsd][statsdreceiver]                 |                                                              |                                        |                                             |                                             |
 |                 [syslog][syslogreceiver]                 |                                                              |                                        |                                             |                                             |
 |                 [tcplog][tcplogreceiver]                 |                                                              |                                        |                                             |                                             |
-|          ~~[`telegraf`][telegrafreceiver]~~              |                                                              |                                        |                                             |                                             |
 |                 [udplog][udplogreceiver]                 |                                                              |                                        |                                             |                                             |
 |                [vcenter][vcenterreceiver]                |                                                              |                                        |                                             |                                             |
 |              [wavefront][wavefrontreceiver]              |                                                              |                                        |                                             |                                             |
@@ -232,7 +231,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [statsdreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/statsdreceiver
 [syslogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/syslogreceiver
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/tcplogreceiver
-[telegrafreceiver]: ./pkg/receiver/telegrafreceiver
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/udplogreceiver
 [vcenterreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/vcenterreceiver
 [wavefrontreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/wavefrontreceiver
