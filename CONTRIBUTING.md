@@ -56,7 +56,7 @@ environment:
 $ cd otelcolbuilder && make build
 Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
 Building otelcol-sumo version: 0.124.1
-CGO_ENABLED=1 /Users/sumo/bin/ocb \
+CGO_ENABLED=0 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
                 --skip-compilation=true
 2021-05-24T16:29:03.494+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
@@ -74,7 +74,7 @@ $ cd otelcolbuilder && make otelcol-sumo-linux_arm64
 GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
 Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
 Building otelcol-sumo version: 0.124.1
-CGO_ENABLED=1 /Users/sumo/bin/ocb \
+CGO_ENABLED=0 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
                 --skip-compilation=true
 2021-05-24T16:32:11.963+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
