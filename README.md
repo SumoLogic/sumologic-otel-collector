@@ -86,7 +86,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                    [iis][iisreceiver]                    |                                                              |                                        |                                             |                                             |
 |               [influxdb][influxdbreceiver]               |                  [unroll][unrollprocessor]                   |                                        |                                             |                                             |
 |                 [jaeger][jaegerreceiver]                 |                                                              |                                        |                                             |                                             |
-|                    [jmx][jmxreceiver]                    |                                                              |                                        |                                             |                                             |
 |               [journald][journaldreceiver]               |                                                              |                                        |                                             |                                             |
 |            [k8s_cluster][k8sclusterreceiver]             |                                                              |                                        |                                             |                                             |
 |             [k8s_events][k8seventsreceiver]              |                                                              |                                        |                                             |                                             |
@@ -187,7 +186,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [iisreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/iisreceiver
 [influxdbreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/influxdbreceiver
 [jaegerreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/jaegerreceiver
-[jmxreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/jmxreceiver
 [journaldreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/journaldreceiver
 [k8sclusterreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/k8sclusterreceiver
 [k8seventsreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.156.0/receiver/k8seventsreceiver
