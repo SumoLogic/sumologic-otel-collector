@@ -26,7 +26,7 @@ environment:
 
 1. Download & install the latest [Go MSI][go-msi].
 
-1. Download & install [Make for Windows][make-for-windows].
+1. Download & install Make for Windows.
 
 1. Open `cmd` and add make to the user PATH:
 
@@ -56,7 +56,7 @@ environment:
 $ cd otelcolbuilder && make build
 Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
 Building otelcol-sumo version: 0.124.1
-CGO_ENABLED=1 /Users/sumo/bin/ocb \
+CGO_ENABLED=0 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
                 --skip-compilation=true
 2021-05-24T16:29:03.494+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
@@ -74,7 +74,7 @@ $ cd otelcolbuilder && make otelcol-sumo-linux_arm64
 GOOS=linux   GOARCH=arm64 /Library/Developer/CommandLineTools/usr/bin/make build BINARY_NAME=otelcol-sumo-linux_arm64
 Installed ocb (/Users/sumo/bin/ocb) is at the correct version: 0.124.0
 Building otelcol-sumo version: 0.124.1
-CGO_ENABLED=1 /Users/sumo/bin/ocb \
+CGO_ENABLED=0 /Users/sumo/bin/ocb \
                 --config .otelcol-builder.yaml \
                 --skip-compilation=true
 2021-05-24T16:32:11.963+0200    INFO    cmd/root.go:99  OpenTelemetry Collector distribution builder    {"version": "dev", "date": "unknown"}
@@ -128,7 +128,6 @@ use (
         ./pkg/processor/metricfrequencyprocessor
         ./pkg/processor/sourceprocessor
         ./pkg/processor/sumologicsyslogprocessor
-        ./pkg/receiver/telegrafreceiver
         ./pkg/configprovider/globprovider
         ./pkg/configprovider/opampprovider
         ./pkg/tools/udpdemux
@@ -157,7 +156,6 @@ To contribute you will need to ensure you have the following setup:
   ```
 
 [go-msi]: https://go.dev/dl/
-[make-for-windows]: https://gnuwin32.sourceforge.net/downlinks/make.php
 [git-for-windows]: https://git-scm.com/download/win
 
 ## Changelog management

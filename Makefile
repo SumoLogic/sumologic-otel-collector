@@ -313,8 +313,7 @@ update-ot:
 		README.md \
 		docs/configuration.md \
 		docs/migration.md \
-		docs/performance.md \
-		pkg/receiver/telegrafreceiver/README.md
+		docs/performance.md
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(go\.opentelemetry\.io\/collector.*\) v$(OT_CORE_VERSION)$$/\1 v$(OT_CORE_NEW)/" {} \;
 	@find . -type f -name "go.mod" -exec $(SED) -i "s/\(github\.com\/open-telemetry\/opentelemetry-collector-contrib\/.*\) v$(OT_CONTRIB_VERSION)$$/\1 v$(OT_CONTRIB_NEW)/" {} \;
 	@echo "building OT distro to check for breakage"

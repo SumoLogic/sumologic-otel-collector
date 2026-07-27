@@ -52,10 +52,6 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			configFile: "testdata/filelog_sumologicexporter_endpoint.yaml",
 		},
 		{
-			name:       "telegrafreceiver with sumologicexporter without sumologicextension",
-			configFile: "testdata/telegrafreceiver_sumologicexporter_endpoint.yaml",
-		},
-		{
 			name:       "filelog reallife example with sumologicexporter without sumologicextension",
 			configFile: "testdata/filelog_reallife_complicated_sumologicexporter.yaml",
 		},
@@ -68,16 +64,12 @@ func TestBuiltCollectorWithConfigurationFiles(t *testing.T) {
 			configFile: "testdata/routing_connector.yaml",
 		},
 		{
-			name:       "metricfrequencyprocessor with telegrafreceiver and sumologicexporter",
+			name:       "metricfrequencyprocessor with sumologicexporter",
 			configFile: "testdata/metricfrequencyprocessor.yaml",
 		},
 		{
 			name:       "filelog with sumologicexporter with persistent queue enabled",
 			configFile: "testdata/filelog_sumologicexporter_with_persistent_queue_enabled.yaml",
-		},
-		{
-			name:       "telegrafreceiver with routingconnector",
-			configFile: "testdata/telegrafreceiver_routingconnector.yaml",
 		},
 		{
 			name:       "resource and attributes processors with support for regexp for delete and hash actions",

@@ -1,21 +1,8 @@
 receivers:
-  telegraf:
-    separate_field: false
-    agent_config: |
-      [agent]
-        interval = "1s"
-        flush_interval = "1s"
-        debug = true
-      [[inputs.cpu]]
-        percpu = true
-        totalcpu = true
-      [[inputs.disk]]
-      [[inputs.net]]
-        interfaces = ["eth*", "en*", "lo*"]
-        ignore_protocol_stats = true
-      [[inputs.netstat]]
-      [[inputs.diskio]]
-      [[inputs.mem]]
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:0
 
 processors:
   metric_frequency:
@@ -35,7 +22,7 @@ service:
   pipelines:
     metrics:
       receivers:
-      - telegraf
+      - otlp
       processors:
       - metric_frequency
       exporters:
