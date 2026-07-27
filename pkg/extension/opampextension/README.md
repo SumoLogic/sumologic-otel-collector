@@ -146,7 +146,6 @@ This section lists the components supported for remote configuration validation 
 |          iis           |                      |               |                      |            |
 |        influxdb        |                      |               |                      |            |
 |         jaeger         |                      |               |                      |            |
-|          jmx           |                      |               |                      |            |
 |        journald        |                      |               |                      |            |
 |       k8scluster       |                      |               |                      |            |
 |       k8sevents        |                      |               |                      |            |
