@@ -73,10 +73,18 @@ endif
 # ex: to get a staticly executable with CGO use EXTRA_LDFLAGS="-linkmode external -extldflags '-static'"
 LDFLAGS := $(EXTRA_LDFLAGS)
 
+
 # CGO_ENABLED=0 is used because we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-CGO_ENABLED ?= 0
+# CGO_ENABLED=1 only for windows because we faced dns resolution issues in vpn setups of customers when using go dns resolver.
+# go dns resolver is not very reliable, so keeping cgo_enabled for windows so that we can switch netgo/cgo dns resolver at runtime.
+# windows cgo details: https://github.com/SumoLogic/sumologic-otel-collector/pull/1869
+ifeq ($(shell go env GOOS),windows)
+    CGO_ENABLED ?= 1
+else
+    CGO_ENABLED ?= 0
+endif
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying the build
 ifeq ($(FIPS_SUFFIX),)
@@ -94,7 +102,7 @@ else
 	endif
 endif
 
-# We want to enforce go dns for all types of binaries. The FIPS binaries are built with CGO enabled and use
+# We want to enforce go dns for all types of binaries except windows. The FIPS binaries are built with CGO enabled and use
 # the CGO resolver. This has caused a DNS resolution error for .local domains in our K8s containers.
 # ref: https://pkg.go.dev/net#hdr-Name_Resolution
 ifneq ($(shell go env GOOS),windows)
