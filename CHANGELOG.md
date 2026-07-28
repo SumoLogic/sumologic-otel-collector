@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.157.0-sumo-0]
+
+### Released 2026-07-28
+
+### Breaking Changes
+
+- Remove deprecated telegrafreceiver component [#2130]
+- chore: Remove deprecated JMX receiver [#2135]
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2127], [#2134]
+
+[#2130]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2130
+[#2135]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2135
+[#2127]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2127
+[#2134]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2134
+[v0.157.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.157.0-sumo-0
+
 ## [v0.155.0-sumo-0]
 
 ### Released 2026-07-02
