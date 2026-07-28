@@ -55,6 +55,5 @@ for FROM_VER in $FROM_VERSIONS; do
         README.md \
         docs/configuration.md \
         docs/migration.md \
-        docs/performance.md \
-        pkg/receiver/telegrafreceiver/README.md
+        docs/performance.md
 done

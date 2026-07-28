@@ -36,21 +36,10 @@ BINARY_NAME ?= otelcol-config
 GO ?= go
 FIPS_SUFFIX ?= ""
 
-# Builds for darwin need to be built with CGO_ENABLED set to 1 because some
-# telegraf plugins that are used within the telegrafreceiver are implemented with
-# CGO. Example of this might be the cpu input plugin using gopsutil to the cpu
-# stats.
-#
-# https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin_nocgo.go
-# https://github.com/shirou/gopsutil/blob/7ea80628/cpu/cpu_darwin.go
-ifeq ($(shell go env GOOS),darwin)
-	CGO_ENABLED ?= 1
-else
-# CGO_ENABLED=0 is used becuase we don't want to rely on c libs and opentelemetry
+# CGO_ENABLED=0 is used because we don't want to rely on c libs and opentelemetry
 # also builds their binaries this way.
 # ref: https://github.com/open-telemetry/opentelemetry-collector/blob/4c503ddc/Makefile#L254-L256
-	CGO_ENABLED ?= 0
-endif
+CGO_ENABLED ?= 0
 
 # We don't want to strip symbols for FIPS builds, as they're useful for verifying
 # the build

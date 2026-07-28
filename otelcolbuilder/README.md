@@ -23,7 +23,7 @@ Exemplar output:
 ```
 Installing github.com/open-telemetry/opentelemetry-collector-builder@0.37.0...
 go install github.com/open-telemetry/opentelemetry-collector-builder@v0.37.0
-CGO_ENABLED=1 opentelemetry-collector-builder \
+CGO_ENABLED=0 opentelemetry-collector-builder \
                 --go go \
                 --version "v0.0.30-beta.0-9-g6f287a4371" \
                 --config .otelcol-builder.yaml \
