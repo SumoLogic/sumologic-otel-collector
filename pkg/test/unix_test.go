@@ -22,6 +22,7 @@ func TestUnix(t *testing.T) {
 		{
 			name:        "ValidateIngestionFileExporter",
 			validations: []checkFunc{checkLogFileCreated},
+			preActions:  []checkFunc{preActionCreateOutputDir},
 			args:        []string{configTag, "./testdata/config/config-file-exporter-valid.yaml"},
 			timeout_ms:  120000,
 		},

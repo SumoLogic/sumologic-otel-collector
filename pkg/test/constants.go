@@ -4,6 +4,7 @@ const (
 	binaryPath                = "../../otelcolbuilder/cmd/otelcol-sumo"
 	configTag                 = "--config"
 	logFilePath               = "output/test.log"
+	outputDir                 = "output"
 	validateCommand           = "validate"
 	credentialsDir            = "/tmp/lib-temp/otelcol-sumo/credentials"
 	sumlogicMockURL           = "http://localhost:3000"

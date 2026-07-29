@@ -94,8 +94,8 @@ func getCommandOutput(c *exec.Cmd, ctx context.Context, cancel context.CancelFun
 }
 
 func tearDown() {
-	if _, err := os.Stat(logFilePath); err == nil {
-		_ = os.Remove(logFilePath)
+	if _, err := os.Stat(outputDir); err == nil {
+		_ = os.RemoveAll(outputDir)
 	}
 	killProcessesByName("otelcol-sumo")
 	if _, err := os.Stat(credentialsDir); err == nil {
