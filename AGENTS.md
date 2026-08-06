@@ -96,7 +96,7 @@ Sumo Logic-specific components, each an independent Go module:
 
 Required tools:
 
-- **Go 1.25.0**
+- **Go 1.25.0**: Refer current version from any `pkg/*/go.mod` (`go` directive) — currently `1.25.0`
 - **ocb 0.151.0**: `make -C otelcolbuilder install-ocb`
 - **yq**: `brew install yq`
 - **staticcheck**: `make install-staticcheck`
