@@ -51,6 +51,7 @@ func TestLocallyManagedSmoke(t *testing.T) {
 		"--write-kv", ".hello.world = \"yes\"",
 		"--enable-clobber",
 		"--set-collector-name", "my-collector",
+		"--set-fleet-id", "000000000ABC1234",
 	}
 
 	os.Args = flags
@@ -72,6 +73,7 @@ func TestRemotelyManagedSmoke(t *testing.T) {
 		"--set-api-url", "https://example.com",
 		"--enable-remote-control",
 		"--set-collector-name", "my-collector",
+		"--set-fleet-id", "000000000ABC1234",
 	}
 
 	os.Args = flags

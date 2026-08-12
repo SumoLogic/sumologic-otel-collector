@@ -28,6 +28,7 @@ const (
 	flagEnableClobber        = "enable-clobber"
 	flagDisableClobber       = "disable-clobber"
 	flagSetCollectorName     = "set-collector-name"
+	flagSetFleetID           = "set-fleet-id"
 )
 
 const (
@@ -51,6 +52,7 @@ const (
 	enableClobberUsage        = "enables clobber (deletes any existing collector with the same name)."
 	disableClobberUsage       = "disables clobber (prevents deletion of existing collectors with the same name)."
 	setCollectorNameUsage     = "sets the collector name in the sumologic extension"
+	setFleetIDUsage           = "sets the fleet ID for fleet-based registration"
 )
 
 type flagValues struct {
@@ -75,6 +77,7 @@ type flagValues struct {
 	EnableClobber        bool
 	DisableClobber       bool
 	SetCollectorName     string
+	SetFleetID           string
 }
 
 func newFlagValues() *flagValues {
@@ -106,6 +109,7 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.BoolVar(&fv.EnableClobber, flagEnableClobber, false, enableClobberUsage)
 	flags.BoolVar(&fv.DisableClobber, flagDisableClobber, false, disableClobberUsage)
 	flags.StringVarP(&fv.SetCollectorName, flagSetCollectorName, "N", "", setCollectorNameUsage)
+	flags.StringVar(&fv.SetFleetID, flagSetFleetID, "", setFleetIDUsage)
 
 	return flags
 }
