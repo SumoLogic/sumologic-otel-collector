@@ -31,7 +31,6 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
 	"go.opentelemetry.io/collector/extension/extensioncapabilities"
 	"go.opentelemetry.io/collector/otelcol"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -712,7 +711,7 @@ func loadConfigAndValidateWithSettings(factories otelcol.Factories, set otelcol.
 	if err != nil {
 		return nil, err
 	}
-	if err = xconfmap.Validate(cfg); err != nil {
+	if err = confmap.Validate(cfg); err != nil {
 		return nil, err
 	}
 	if err = cfg.Validate(); err != nil {
