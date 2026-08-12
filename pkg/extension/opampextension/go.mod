@@ -150,7 +150,6 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.64.0
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.64.0
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.64.0
-	go.opentelemetry.io/collector/confmap/xconfmap v0.158.0
 	go.opentelemetry.io/collector/exporter v1.64.0
 	go.opentelemetry.io/collector/exporter/debugexporter v0.158.0
 	go.opentelemetry.io/collector/exporter/nopexporter v0.158.0
@@ -178,6 +177,7 @@ require (
 	github.com/cenkalti/backoff/v7 v7.0.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/config/configdbauth v0.158.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/dbauth v0.158.0 // indirect
+	go.opentelemetry.io/collector/confmap/xconfmap v0.158.0 // indirect
 	go.opentelemetry.io/contrib/propagators/autoprop v0.69.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.44.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.44.0 // indirect

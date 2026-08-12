@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/confmap/xconfmap"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
@@ -34,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	factory := NewFactory()
 	factories.Processors[Type] = factory
 
-	require.NoError(t, xconfmap.Validate(factory.CreateDefaultConfig()))
+	require.NoError(t, componenttest.CheckConfigStruct(factory.CreateDefaultConfig()))
 
 	cfg, err := otelcoltest.LoadConfig(path.Join(".", "testdata", "config.yaml"), factories)
 	require.NoError(t, err)
