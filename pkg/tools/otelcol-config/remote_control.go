@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -59,6 +60,13 @@ func makeNewSumologicRemoteYAML(ctx *actionContext, conf ConfDir) error {
 
 	if ctx.Flags.SetCollectorName != "" {
 		sumologicExt["collector_name"] = ctx.Flags.SetCollectorName
+	}
+
+	if ctx.Flags.SetFleetID != "" {
+		if err := validateFleetID(ctx.Flags.SetFleetID); err != nil {
+			return err
+		}
+		sumologicExt["fleet_id"] = strings.TrimSpace(ctx.Flags.SetFleetID)
 	}
 
 	var sumoRemoteConfig = map[string]any{

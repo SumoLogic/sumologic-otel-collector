@@ -214,3 +214,14 @@ func TestSetCollectorName(t *testing.T) {
 		t.Errorf("bad flag values: got %v, want %v", got, want)
 	}
 }
+
+func TestSetFleetID(t *testing.T) {
+	fv := newFlagValues()
+	fs := makeFlagSet(fv)
+	if err := fs.Parse([]string{"otelcol-config", "--set-fleet-id", "000000000ABC1234"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := fv.SetFleetID, "000000000ABC1234"; !cmp.Equal(got, want) {
+		t.Errorf("bad flag values: got %v, want %v", got, want)
+	}
+}

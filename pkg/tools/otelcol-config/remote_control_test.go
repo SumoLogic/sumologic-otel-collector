@@ -136,3 +136,70 @@ service:
 		t.Fatal(err)
 	}
 }
+
+func TestEnableRemoteControlWithFleetID(t *testing.T) {
+	values := &flagValues{
+		EnableRemoteControl: true,
+		SetCollectorName:    "my-collector",
+		SetFleetID:          "000000000ABC1234",
+	}
+	const expData = `exporters:
+  nop: {}
+extensions:
+  file_storage:
+    compaction:
+      directory: /var/lib/otelcol-sumo/file_storage
+      on_rebound: true
+    directory: /var/lib/otelcol-sumo/file_storage
+  health_check:
+    endpoint: localhost:13133
+  opamp:
+    endpoint: wss://opamp-collectors.sumologic.com/v1/opamp
+    remote_configuration_directory: /etc/otelcol-sumo/opamp.d
+  sumologic:
+    clobber: false
+    collector_credentials_directory: /var/lib/otelcol-sumo/credentials
+    collector_name: my-collector
+    fleet_id: 000000000ABC1234
+    installation_token: ${SUMOLOGIC_INSTALLATION_TOKEN}
+    time_zone: UTC
+receivers:
+  nop: {}
+service:
+  extensions:
+    - sumologic
+    - health_check
+    - file_storage
+    - opamp
+  pipelines:
+    logs/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
+    metrics/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
+    traces/default:
+      exporters:
+        - nop
+      receivers:
+        - nop
+`
+	slrWriter := newTestWriter([]byte(expData))
+	ctx := &actionContext{
+		ConfigDir:            fstest.MapFS{},
+		Flags:                values,
+		Stdout:               errWriter{},
+		Stderr:               errWriter{},
+		WriteConfD:           errWriter{}.Write,
+		WriteConfDOverrides:  errWriter{}.Write,
+		WriteSumologicRemote: slrWriter.Write,
+	}
+
+	if err := EnableRemoteControlAction(ctx); err != nil {
+		t.Fatal(err)
+	}
+}
