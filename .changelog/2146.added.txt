@@ -1,1 +1,0 @@
-feat(otelcol-config): add --set-fleet-id flag for fleet-based registration

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.158.0-sumo-0]
+
+### Released 2026-08-13
+
+### Added
+
+- feat(otelcol-config): add --set-fleet-id flag for fleet-based registration [#2146]
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2145]
+
+[#2146]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2146
+[#2145]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2145
+[v0.158.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.158.0-sumo-0
+
 ## [v0.157.0-sumo-0]
 
 ### Released 2026-07-28
