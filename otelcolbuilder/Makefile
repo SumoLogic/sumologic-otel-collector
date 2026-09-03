@@ -90,22 +90,15 @@ endif
 ifeq ($(FIPS_SUFFIX),)
 	GOEXPERIMENT=
 	LDFLAGS+= -s -w
-	GOTOOLCHAIN=
 else
 # We want to use boringcrypto for fips setup
 	ifeq ($(shell go env GOOS),windows)
 		GOEXPERIMENT=systemcrypto
 		GOTAGS := $(GOTAGS) requirefips
 		LDFLAGS+= -w
-		# Prevent GOTOOLCHAIN from auto-switching away from the installed Microsoft Go
-		# distribution (which provides systemcrypto). If modules require a newer Go
-		# version, GOTOOLCHAIN=local keeps the installed toolchain rather than
-		# downloading standard Go, which doesn't support GOEXPERIMENT=systemcrypto.
-		GOTOOLCHAIN=local
 	else
 		GOEXPERIMENT=boringcrypto
 		LDFLAGS+= -w
-		GOTOOLCHAIN=
 	endif
 endif
 
@@ -181,7 +174,7 @@ _ocb_build:
 .PHONY: _gobuild
 _gobuild:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) GOTOOLCHAIN=$(GOTOOLCHAIN) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-ldflags="$(LDFLAGS)" \
 		-trimpath \
@@ -192,7 +185,7 @@ _gobuild:
 .PHONY: _gobuild_debug
 _gobuild_debug:
 	(cd cmd && \
-		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) GOTOOLCHAIN=$(GOTOOLCHAIN) go build -v \
+		CGO_ENABLED=$(CGO_ENABLED) GOEXPERIMENT=$(GOEXPERIMENT) go build -v \
 		-tags "$(GOTAGS)" \
 		-race \
 		-gcflags "all=-N -l" \
