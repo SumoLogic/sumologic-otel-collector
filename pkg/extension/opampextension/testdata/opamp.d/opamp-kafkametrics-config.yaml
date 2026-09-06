@@ -6,11 +6,10 @@ receivers:
       - brokers
       - topics
       - consumers
-    auth:
-      tls:
-        ca_file: ca.pem
-        cert_file: cert.pem
-        key_file: key.pem
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
     collection_interval: 5s
 exporters:
     sumologic:

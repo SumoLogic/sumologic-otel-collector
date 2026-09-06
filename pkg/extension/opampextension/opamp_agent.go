@@ -146,7 +146,7 @@ func (o *opampAgent) Start(ctx context.Context, host component.Host) error {
 		return err
 	}
 
-	o.endpoint = o.cfg.Endpoint
+	o.endpoint = o.cfg.ClientConfig.Endpoint
 	if o.endpoint == "" {
 		o.endpoint = DefaultSumoLogicOpAmpURL
 	}
