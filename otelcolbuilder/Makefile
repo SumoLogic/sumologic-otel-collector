@@ -36,7 +36,7 @@ include $(toolchains_dir)/Makefile
 ################################################################################
 
 BINARY_NAME ?= otelcol-sumo
-OCB_VERSION ?= 0.159.0
+OCB_VERSION ?= 0.160.0
 FIPS_SUFFIX ?=
 OTC_RELEASE_REPO ?= github.com/open-telemetry/opentelemetry-collector-releases
 GO ?= go

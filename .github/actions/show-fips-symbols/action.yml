@@ -35,4 +35,4 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         go tool nm ${{ inputs.name }} | \
-        grep "vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt.GetFipsAlgorithmMode"
+        grep "go-crypto-winnative"

@@ -125,3 +125,21 @@ func (f *FakeInformer) SetWatchErrorHandlerWithContext(cache.WatchErrorHandlerWi
 func (f *FakeInformer) SetTransform(cache.TransformFunc) error {
 	return nil
 }
+
+func (c *FakeController) HasSyncedChecker() cache.DoneChecker {
+	return &fakeDoneChecker{}
+}
+
+// fakeDoneChecker implements cache.DoneChecker for fake informers.
+// Done() returns a pre-closed channel because fakes are always considered synced.
+type fakeDoneChecker struct{}
+
+func (f *fakeDoneChecker) Name() string {
+	return "FakeInformer"
+}
+
+func (f *fakeDoneChecker) Done() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}

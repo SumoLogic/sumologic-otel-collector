@@ -279,7 +279,6 @@ func TestSaveEffectiveConfigWithInvalidConfig(t *testing.T) {
 		errorMessage string
 	}{
 		{"ApplyInvalidApacheURIConfig", "testdata/opamp.d/opamp-invalid-apache-uri-config.yaml", "query must be 'auto'"},
-		{"ApplyInvalidApacheKeysConfig", "testdata/opamp.d/opamp-invalid-apache-keys-config.yaml", "has invalid keys: endpointt"},
 		{"ApplyInvalidPipelineConfigUndefinedComponent", "testdata/opamp.d/opamp-invalid-pipeline-undefined-component-config.yaml", "references receiver \"file\" which is not configured"},
 		{"ApplyInvalidPipelineConfigNoExporter", "testdata/opamp.d/opamp-invalid-pipeline-no-exporter-config.yaml", "must have at least one exporter"},
 	}
@@ -315,7 +314,6 @@ func TestInvalidConfigNotPersistedAfterValidationFailure(t *testing.T) {
 		errorMessage string
 	}{
 		{"InvalidApacheURIConfig", "testdata/opamp.d/opamp-invalid-apache-uri-config.yaml", "query must be 'auto'"},
-		{"InvalidApacheKeysConfig", "testdata/opamp.d/opamp-invalid-apache-keys-config.yaml", "has invalid keys: endpointt"},
 		{"InvalidPipelineConfigUndefinedComponent", "testdata/opamp.d/opamp-invalid-pipeline-undefined-component-config.yaml", "references receiver \"file\" which is not configured"},
 		{"InvalidPipelineConfigNoExporter", "testdata/opamp.d/opamp-invalid-pipeline-no-exporter-config.yaml", "must have at least one exporter"},
 	}

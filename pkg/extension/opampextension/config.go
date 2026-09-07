@@ -29,7 +29,7 @@ import (
 
 // Config has the configuration for the opamp extension.
 type Config struct {
-	confighttp.ClientConfig `mapstructure:",squash"`
+	ClientConfig confighttp.ClientConfig `mapstructure:",squash"`
 
 	// InstanceUID is a ULID formatted as a 26 character string in canonical
 	// representation. Auto-generated on start if missing.
