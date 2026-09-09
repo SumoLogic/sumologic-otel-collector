@@ -4,7 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
     labels:
       - skip-changelog
 
@@ -13,7 +16,10 @@ updates:
     - "/pkg/**"
     schedule:
       interval: "daily"
-
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
     labels:
       - skip-changelog
 
@@ -21,6 +27,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
     labels:
       - skip-changelog
