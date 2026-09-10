@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.160.0-sumo-0]
+
+### Released 2026-09-07
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2152], [#2157]
+
+[#2152]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2152
+[#2157]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2157
+[v0.160.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.160.0-sumo-0
+
 ## [v0.158.0-sumo-0]
 
 ### Released 2026-08-13
