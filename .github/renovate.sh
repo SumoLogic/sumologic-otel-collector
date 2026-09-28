@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 make gomod-download-all
-TO_VERSIONS=$(grep -o 'github.com/open-telemetry/opentelemetry-collector-contrib[^ ]* v[0-9.]\+' pkg/extension/opampextension/go.mod | awk '{print $2}' | sed 's/^v//' | sort -u)
+TO_VERSIONS=$(grep -o 'github.com/open-telemetry/opentelemetry-collector-contrib[^ ]* v[0-9.]\+' pkg/extension/opampextension/go.mod | awk '{print $2}' | sed 's/^v//' | grep '^0\.' | sort -u)
 TO_VERSION_COUNT=$(echo "$TO_VERSIONS" | wc -l)
 if [[ "$TO_VERSION_COUNT" -gt 1 ]]; then
   echo "Error: Multiple versions found: $TO_VERSIONS"
