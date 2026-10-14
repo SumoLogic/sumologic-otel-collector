@@ -132,7 +132,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                 [tcplog][tcplogreceiver]                 |                                                              |                                        |                                             |                                             |
 |                 [udplog][udplogreceiver]                 |                                                              |                                        |                                             |                                             |
 |                [vcenter][vcenterreceiver]                |                                                              |                                        |                                             |                                             |
-|              [wavefront][wavefrontreceiver]              |                                                              |                                        |                                             |                                             |
 |        [windowseventlog][windowseventlogreceiver]        |                                                              |                                        |                                             |                                             |
 |    [windowsperfcounters][windowsperfcountersreceiver]    |                                                              |                                        |                                             |                                             |
 |                 [zipkin][zipkinreceiver]                 |                                                              |                                        |                                             |                                             |
@@ -231,7 +230,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [tcplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/tcplogreceiver
 [udplogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/udplogreceiver
 [vcenterreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/vcenterreceiver
-[wavefrontreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/wavefrontreceiver
 [windowseventlogreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/windowseventlogreceiver
 [windowsperfcountersreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/windowsperfcountersreceiver
 [zipkinreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/receiver/zipkinreceiver
