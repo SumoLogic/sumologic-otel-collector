@@ -182,5 +182,6 @@ This section lists the components supported for remote configuration validation 
 |         statsd         |                      |               |                      |            |
 |         tcplog         |                      |               |                      |            |
 |         udplog         |                      |               |                      |            |
+|       wavefront        |                      |               |                      |            |
 |         zipkin         |                      |               |                      |            |
 |       zookeeper        |                      |               |                      |            |
