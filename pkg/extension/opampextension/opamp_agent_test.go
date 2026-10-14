@@ -164,6 +164,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyTcplogReceiverConfig", "testdata/opamp.d/opamp-tcplog-receiver-config.yaml", false, ""},
 		{"ApplyUdplogReceiverConfig", "testdata/opamp.d/opamp-udplog-receiver-config.yaml", false, ""},
 		{"ApplyVcenterReceiverConfig", "testdata/opamp.d/opamp-vcenter-receiver-config.yaml", false, ""},
+		{"ApplyWavefrontReceiverConfig", "testdata/opamp.d/opamp-wavefront-receiver-config.yaml", false, ""},
 		{"ApplyZipkinReceiverConfig", "testdata/opamp.d/opamp-zipkin-receiver-config.yaml", false, ""},
 		{"ApplyZookeeperReceiverConfig", "testdata/opamp.d/opamp-zookeeper-receiver-config.yaml", false, ""},
 		{"ApplyRemoteWindowsEventConfig", "testdata/opamp.d/opamp-windows-event-config.yaml", false, ""},
