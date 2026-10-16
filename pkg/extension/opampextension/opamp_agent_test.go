@@ -92,6 +92,7 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyLoadbalancingExporterConfig", "testdata/opamp.d/opamp-loadbalancing-exporter-config.yaml", false, ""},
 		{"ApplyCumulativetodeltaProcessorConfig", "testdata/opamp.d/opamp-cumulativetodelta-processor-config.yaml", false, ""},
 		{"ApplyDeltatorateProcessorConfig", "testdata/opamp.d/opamp-deltatorate-processor-config.yaml", false, ""},
+		{"ApplyGenAINormalizerProcessorConfig", "testdata/opamp.d/opamp-genai-normalizer-processor-config.yaml", false, ""},
 		{"ApplyMetricsgenerationProcessorConfig", "testdata/opamp.d/opamp-metricsgeneration-processor-config.yaml", false, ""},
 		{"ApplyGroupbyattrsProcessorConfig", "testdata/opamp.d/opamp-groupbyattrs-processor-config.yaml", false, ""},
 		{"ApplyGroupbytraceProcessorConfig", "testdata/opamp.d/opamp-groupbytrace-processor-config.yaml", false, ""},

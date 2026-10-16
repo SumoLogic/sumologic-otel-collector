@@ -85,7 +85,7 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |              [httpcheck][httpcheckreceiver]              |               [transform][transformprocessor]                |                                        |                                             |                                             |
 |                    [iis][iisreceiver]                    |                                                              |                                        |                                             |                                             |
 |               [influxdb][influxdbreceiver]               |                  [unroll][unrollprocessor]                   |                                        |                                             |                                             |
-|                 [jaeger][jaegerreceiver]                 |                                                              |                                        |                                             |                                             |
+|                 [jaeger][jaegerreceiver]                 |        [gen_ai_normalizer][genainormalizerprocessor]         |                                        |                                             |                                             |
 |               [journald][journaldreceiver]               |                                                              |                                        |                                             |                                             |
 |            [k8s_cluster][k8sclusterreceiver]             |                                                              |                                        |                                             |                                             |
 |             [k8s_events][k8seventsreceiver]              |                                                              |                                        |                                             |                                             |
@@ -307,4 +307,5 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [spanmetricsconnector]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/connector/spanmetricsconnector
 [geoipprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/processor/geoipprocessor
 [unrollprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/unrollprocessor
+[genainormalizerprocessor]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.161.0/processor/genainormalizerprocessor
 [lookupprocessor]:./pkg/processor/lookupprocessor

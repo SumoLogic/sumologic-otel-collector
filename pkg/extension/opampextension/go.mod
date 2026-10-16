@@ -41,6 +41,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.161.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.161.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.161.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/genainormalizerprocessor v0.161.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor v0.161.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.161.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.161.0
@@ -173,6 +174,7 @@ require (
 )
 
 require (
+	github.com/Arize-ai/openinference/go/openinference-semantic-conventions v0.1.5 // indirect
 	github.com/brunoscheufler/aws-ecs-metadata-go v0.0.0-20221221133751-67e37ae746cd // indirect
 	github.com/cenkalti/backoff/v7 v7.0.0 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
@@ -183,6 +185,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/dbauth v0.161.0 // indirect
 	github.com/oracle/oci-go-sdk/v65 v65.121.1 // indirect
 	github.com/sony/gobreaker/v2 v2.4.0 // indirect
+	github.com/traceloop/go-openllmetry/semconv-ai v0.0.0-20260117121325-ee5a5c89c1f5 // indirect
 	go.opentelemetry.io/collector/confmap/xconfmap v0.161.0 // indirect
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.45.0 // indirect
 	go.opentelemetry.io/contrib/detectors/aws/eks v1.45.0 // indirect
