@@ -38,6 +38,8 @@ github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 h1:/vQbFIOMb
 github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4/go.mod h1:hN7oaIRCjzsZ2dE+yG5k+rsdt3qcwykqK6HVGcKwsw4=
 github.com/99designs/keyring v1.2.2 h1:pZd3neh/EmUzWONb35LxQfvuY7kiSXAq3HQd97+XBn0=
 github.com/99designs/keyring v1.2.2/go.mod h1:wes/FrByc8j7lFOAGLGSNEg8f/PaI3cgTBqhFkHUrPk=
+github.com/Arize-ai/openinference/go/openinference-semantic-conventions v0.1.9 h1:ZYZf8UII98pT8fFGKwW8BCXxpfmIBu4ChZSR5U/H6Og=
+github.com/Arize-ai/openinference/go/openinference-semantic-conventions v0.1.9/go.mod h1:C5hLjt/dUbEb3pSkhNbLYu/xpu6HB0XHK6fZOiXXeR0=
 github.com/AthenZ/athenz v1.12.27 h1:h/QD55Iz4kV5GWvWF9HQQzib0XPrECPLEl/FTV0mAP0=
 github.com/AthenZ/athenz v1.12.27/go.mod h1:r8PYz50BLIByx+qjsoCIxVMq2wd1TL4Iu/K8GLbovYs=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1 h1:zvXfGJCWvywnCA814d8ZiVyt+fm9nnTE8xSb99zRyfo=
@@ -1130,6 +1132,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatoratep
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.163.0/go.mod h1:scRcEk4aLbbS1ovkPm3GRoLYKn9bz1JQPybT4VtJEcc=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.163.0 h1:/ENYXUpczuoJb2d28FfDNdy2anYHrumssHWgWozhvJM=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.163.0/go.mod h1:IZ8cVQn5R9TaIwssOCRtDGqJdVbThb/VTpv3xgfBvWk=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/genainormalizerprocessor v0.163.0 h1:LDlsRMeIQNHhRD/hzZ4yokhvx6oTIs0g8RHBex79Y70=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/genainormalizerprocessor v0.163.0/go.mod h1:vAUUKKtdbrrJ0DEQ4M2egiA5ugK0qmLTmkkNp0GykiI=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor v0.163.0 h1:n3wOqb42qTIYZWlx8LUXgf9qNrrEit4hBTBOmiHSEcs=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor v0.163.0/go.mod h1:mGba75BaAzEK24bbz5hGOr/4jbZ0IWqsntxZTsYtDK0=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.163.0 h1:m/CwIBwXiMevJV58OfQ1pbHGUiD8kHjjyiVBsGtJytA=
@@ -1541,6 +1545,8 @@ github.com/tklauser/go-sysconf v0.4.0 h1:7H0uAN+7RkwWRaxhYXDLqa5V3LPrJeV8wmD9dRU
 github.com/tklauser/go-sysconf v0.4.0/go.mod h1:8mTNWyog7H+MpKijp4VmKJAd2bbYQ2zuUwkYRbUArPI=
 github.com/tklauser/numcpus v0.12.0 h1:NR85qdvHA9pFse3x3weVZ0r0ST8R6l5RHbZrlRaqob4=
 github.com/tklauser/numcpus v0.12.0/go.mod h1:ABHeXzJnr/qqwguhClkZKT1/8VABcYrsyUiUGobwWJg=
+github.com/traceloop/go-openllmetry/semconv-ai v0.0.0-20260117121325-ee5a5c89c1f5 h1:0yGaSsGbDuZ4Sen/wK9+s2paKtknsTYbV/vjTb2Av9g=
+github.com/traceloop/go-openllmetry/semconv-ai v0.0.0-20260117121325-ee5a5c89c1f5/go.mod h1:bpFt6r0KbNnStN2jgtsxotF1d9Pko1P3gigpy4hi1zg=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/twmb/franz-go v1.7.0/go.mod h1:PMze0jNfNghhih2XHbkmTFykbMF5sJqmNJB31DOOzro=
 github.com/twmb/franz-go v1.22.1 h1:J7Xixbb7k0Itl39eaBot5PIblZh9IL3ZKYgo2yzlf40=

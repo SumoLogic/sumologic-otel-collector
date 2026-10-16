@@ -41,6 +41,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.163.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.163.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.163.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/genainormalizerprocessor v0.163.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/geoipprocessor v0.163.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.163.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.163.0
@@ -173,6 +174,7 @@ require (
 )
 
 require (
+	github.com/Arize-ai/openinference/go/openinference-semantic-conventions v0.1.9 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v8 v8.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v8 v8.0.0 // indirect
 	github.com/brunoscheufler/aws-ecs-metadata-go v0.0.0-20221221133751-67e37ae746cd // indirect
@@ -190,6 +192,7 @@ require (
 	github.com/oracle/oci-go-sdk/v65 v65.124.1 // indirect
 	github.com/sony/gobreaker/v2 v2.4.0 // indirect
 	github.com/theparanoids/crypki v1.20.9 // indirect
+	github.com/traceloop/go-openllmetry/semconv-ai v0.0.0-20260117121325-ee5a5c89c1f5 // indirect
 	go.opentelemetry.io/collector/confmap/xconfmap v0.163.0 // indirect
 	go.opentelemetry.io/collector/internal/statusutil v0.163.0 // indirect
 	go.opentelemetry.io/contrib/detectors/aws/ecs v1.45.0 // indirect
