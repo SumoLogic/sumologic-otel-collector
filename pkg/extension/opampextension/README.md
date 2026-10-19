@@ -128,7 +128,7 @@ This section lists the components supported for remote configuration validation 
 |        collectd        |         span         |               |       ecstask        |            |
 |        couchdb         |     tailsampling     |               |    memorylimiter     |            |
 |        datadog         |        unroll        |               |                      |            |
-|         expvar         |                      |               |                      |            |
+|         expvar         |  gen_ai_normalizer   |               |                      |            |
 |       filestats        |                      |               |                      |            |
 |      flinkmetrics      |                      |               |                      |            |
 |     fluentforward      |                      |               |                      |            |
