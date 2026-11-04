@@ -21,6 +21,8 @@ type actionContext struct {
 	WriteSumologicRemote      func([]byte) (int, error)
 	LinkHostMetrics           func() error
 	UnlinkHostMetrics         func() error
+	LinkCollectorTelemetry    func() error
+	UnlinkCollectorTelemetry  func() error
 	LinkEphemeral             func() error
 	UnlinkEphemeral           func() error
 	SystemdEnabled            bool

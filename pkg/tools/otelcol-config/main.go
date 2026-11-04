@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	hostmetricsYAML = "hostmetrics.yaml"
-	ephemeralYAML   = "ephemeral.yaml"
+	hostmetricsYAML        = "hostmetrics.yaml"
+	collectorTelemetryYAML = "collector_telemetry.yaml"
+	ephemeralYAML          = "ephemeral.yaml"
 )
 
 // errorCoder is here to give actions a way to set the exit status of the program
@@ -177,6 +178,14 @@ func getHostMetricsUnlinker(values *flagValues) func() error {
 	return getUnlinker(values, hostmetricsYAML)
 }
 
+func getCollectorTelemetryLinker(values *flagValues) func() error {
+	return getLinker(values, collectorTelemetryYAML)
+}
+
+func getCollectorTelemetryUnlinker(values *flagValues) func() error {
+	return getUnlinker(values, collectorTelemetryYAML)
+}
+
 func getEphemeralLinker(values *flagValues) func() error {
 	return getLinker(values, ephemeralYAML)
 }
@@ -254,6 +263,8 @@ func main() {
 		WriteSumologicRemote:      getSumologicRemoteWriter(flagValues),
 		LinkHostMetrics:           getHostMetricsLinker(flagValues),
 		UnlinkHostMetrics:         getHostMetricsUnlinker(flagValues),
+		LinkCollectorTelemetry:    getCollectorTelemetryLinker(flagValues),
+		UnlinkCollectorTelemetry:  getCollectorTelemetryUnlinker(flagValues),
 		LinkEphemeral:             getEphemeralLinker(flagValues),
 		UnlinkEphemeral:           getEphemeralUnlinker(flagValues),
 		SystemdEnabled:            getSystemdEnabled(),
