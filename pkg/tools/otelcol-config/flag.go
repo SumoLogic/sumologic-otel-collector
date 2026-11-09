@@ -7,77 +7,83 @@ import (
 )
 
 const (
-	flagHelp                 = "help"
-	flagAddTag               = "add-tag"
-	flagDeleteTag            = "delete-tag"
-	flagSetInstallationToken = "set-installation-token"
-	flagSetOpAmpEndpoint     = "set-opamp-endpoint"
-	flagSetAPIURL            = "set-api-url"
-	flagEnableHostmetrics    = "enable-hostmetrics"
-	flagDisableHostmetrics   = "disable-hostmetrics"
-	flagEnableEphemeral      = "enable-ephemeral"
-	flagDisableEphemeral     = "disable-ephemeral"
-	flagSetTimezone          = "set-timezone"
-	flagEnableRemoteControl  = "enable-remote-control"
-	flagDisableRemoteControl = "disable-remote-control"
-	flagConfigDir            = "config"
-	flagLaunchdDir           = "launchd"
-	flagWriteKV              = "write-kv"
-	flagReadKV               = "read-kv"
-	flagOverride             = "override"
-	flagEnableClobber        = "enable-clobber"
-	flagDisableClobber       = "disable-clobber"
-	flagSetCollectorName     = "set-collector-name"
-	flagSetFleetID           = "set-fleet-id"
+	flagHelp                      = "help"
+	flagAddTag                    = "add-tag"
+	flagDeleteTag                 = "delete-tag"
+	flagSetInstallationToken      = "set-installation-token"
+	flagSetOpAmpEndpoint          = "set-opamp-endpoint"
+	flagSetAPIURL                 = "set-api-url"
+	flagEnableHostmetrics         = "enable-hostmetrics"
+	flagDisableHostmetrics        = "disable-hostmetrics"
+	flagEnableTelemetryReporting  = "enable-telemetry-reporting"
+	flagDisableTelemetryReporting = "disable-telemetry-reporting"
+	flagEnableEphemeral           = "enable-ephemeral"
+	flagDisableEphemeral          = "disable-ephemeral"
+	flagSetTimezone               = "set-timezone"
+	flagEnableRemoteControl       = "enable-remote-control"
+	flagDisableRemoteControl      = "disable-remote-control"
+	flagConfigDir                 = "config"
+	flagLaunchdDir                = "launchd"
+	flagWriteKV                   = "write-kv"
+	flagReadKV                    = "read-kv"
+	flagOverride                  = "override"
+	flagEnableClobber             = "enable-clobber"
+	flagDisableClobber            = "disable-clobber"
+	flagSetCollectorName          = "set-collector-name"
+	flagSetFleetID                = "set-fleet-id"
 )
 
 const (
-	addTagUsage               = "adds tags (eg: '--add-tag foo=bar --add-tag bar=baz' adds foo and bar tags)"
-	delTagUsage               = "deletes tags (eg: '--delete-tag foo bar' deletes tags foo and bar)"
-	sitUsage                  = "sets the sumo logic installation token"
-	enableHMUsage             = "enables hostmetrics"
-	disableHMUsage            = "disables hostmetrics"
-	enableEphemeralUsage      = "enables ephemeral mode"
-	disableEphemeralUsage     = "disables ephemeral mode"
-	enableRemoteControlUsage  = "enables remote control via opamp"
-	disableRemoteControlUsage = "disables remote control, uses local configuration only"
-	setOpAmpEndpointUsage     = "sets the opamp endpoint (eg: wss://example.com)"
-	configUsage               = "path to sumologic configuration directory"
-	launchdUsage              = "path to launchd daemons directory (mac only)"
-	writeKVUsage              = `write key-value in conf.d with yq expression (eg: --write-kv '.extensions.sumologic.foo = "bar"')`
-	getKVUsage                = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
-	overrideUsage             = "for write-kv, override all other user settings"
-	setAPIURLUsage            = "sets the base_api_url field in the sumologic extension"
-	setTimezoneUsage          = "sets the time_zone field in the sumologic extension"
-	enableClobberUsage        = "enables clobber (deletes any existing collector with the same name)."
-	disableClobberUsage       = "disables clobber (prevents deletion of existing collectors with the same name)."
-	setCollectorNameUsage     = "sets the collector name in the sumologic extension"
-	setFleetIDUsage           = "sets the fleet ID for fleet-based registration"
+	addTagUsage                    = "adds tags (eg: '--add-tag foo=bar --add-tag bar=baz' adds foo and bar tags)"
+	delTagUsage                    = "deletes tags (eg: '--delete-tag foo bar' deletes tags foo and bar)"
+	sitUsage                       = "sets the sumo logic installation token"
+	enableHMUsage                  = "enables hostmetrics"
+	disableHMUsage                 = "disables hostmetrics"
+	enableTelemetryReportingUsage  = "enables collector telemetry reporting (self-metrics scrape)"
+	disableTelemetryReportingUsage = "disables collector telemetry reporting"
+	enableEphemeralUsage           = "enables ephemeral mode"
+	disableEphemeralUsage          = "disables ephemeral mode"
+	enableRemoteControlUsage       = "enables remote control via opamp"
+	disableRemoteControlUsage      = "disables remote control, uses local configuration only"
+	setOpAmpEndpointUsage          = "sets the opamp endpoint (eg: wss://example.com)"
+	configUsage                    = "path to sumologic configuration directory"
+	launchdUsage                   = "path to launchd daemons directory (mac only)"
+	writeKVUsage                   = `write key-value in conf.d with yq expression (eg: --write-kv '.extensions.sumologic.foo = "bar"')`
+	getKVUsage                     = "read key-value from conf.d with yq path (eg: --read-kv .extensions.sumologic.foo)"
+	overrideUsage                  = "for write-kv, override all other user settings"
+	setAPIURLUsage                 = "sets the base_api_url field in the sumologic extension"
+	setTimezoneUsage               = "sets the time_zone field in the sumologic extension"
+	enableClobberUsage             = "enables clobber (deletes any existing collector with the same name)."
+	disableClobberUsage            = "disables clobber (prevents deletion of existing collectors with the same name)."
+	setCollectorNameUsage          = "sets the collector name in the sumologic extension"
+	setFleetIDUsage                = "sets the fleet ID for fleet-based registration"
 )
 
 type flagValues struct {
-	AddTags              map[string]string
-	DeleteTags           []string
-	InstallationToken    string
-	EnableHostmetrics    bool
-	DisableHostmetrics   bool
-	EnableEphemeral      bool
-	DisableEphemeral     bool
-	EnableRemoteControl  bool
-	DisableRemoteControl bool
-	SetOpAmpEndpoint     string
-	SetTimezone          string
-	Help                 bool
-	ConfigDir            string
-	LaunchdDir           string
-	WriteKV              []string
-	ReadKV               []string
-	Override             bool
-	SetAPIURL            string
-	EnableClobber        bool
-	DisableClobber       bool
-	SetCollectorName     string
-	SetFleetID           string
+	AddTags                   map[string]string
+	DeleteTags                []string
+	InstallationToken         string
+	EnableHostmetrics         bool
+	DisableHostmetrics        bool
+	EnableTelemetryReporting  bool
+	DisableTelemetryReporting bool
+	EnableEphemeral           bool
+	DisableEphemeral          bool
+	EnableRemoteControl       bool
+	DisableRemoteControl      bool
+	SetOpAmpEndpoint          string
+	SetTimezone               string
+	Help                      bool
+	ConfigDir                 string
+	LaunchdDir                string
+	WriteKV                   []string
+	ReadKV                    []string
+	Override                  bool
+	SetAPIURL                 string
+	EnableClobber             bool
+	DisableClobber            bool
+	SetCollectorName          string
+	SetFleetID                string
 }
 
 func newFlagValues() *flagValues {
@@ -94,6 +100,8 @@ func makeFlagSet(fv *flagValues) *pflag.FlagSet {
 	flags.StringVarP(&fv.InstallationToken, flagSetInstallationToken, "t", "", sitUsage)
 	flags.BoolVar(&fv.EnableHostmetrics, flagEnableHostmetrics, false, enableHMUsage)
 	flags.BoolVar(&fv.DisableHostmetrics, flagDisableHostmetrics, false, disableHMUsage)
+	flags.BoolVar(&fv.EnableTelemetryReporting, flagEnableTelemetryReporting, false, enableTelemetryReportingUsage)
+	flags.BoolVar(&fv.DisableTelemetryReporting, flagDisableTelemetryReporting, false, disableTelemetryReportingUsage)
 	flags.BoolVar(&fv.EnableEphemeral, flagEnableEphemeral, false, enableEphemeralUsage)
 	flags.BoolVar(&fv.DisableEphemeral, flagDisableEphemeral, false, disableEphemeralUsage)
 	flags.BoolVar(&fv.EnableRemoteControl, flagEnableRemoteControl, false, enableRemoteControlUsage)
