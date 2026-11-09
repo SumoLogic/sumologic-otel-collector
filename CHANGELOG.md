@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.163.0-sumo-0]
+
+### Released 2026-10-21
+
+### Breaking Changes
+
+- chore: remove wavefront receiver [#2167]
+
+### Added
+
+- chore: added genainormalizerprocessor [#2169]
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2168]
+
+[#2167]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2167
+[#2169]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2169
+[#2168]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2168
+[v0.163.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.163.0-sumo-0
+
 ## [v0.161.0-sumo-0]
 
 ### Released 2026-09-28

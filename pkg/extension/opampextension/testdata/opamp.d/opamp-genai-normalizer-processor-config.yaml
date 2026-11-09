@@ -1,0 +1,20 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  sumologic:
+processors:
+  gen_ai_normalizer:
+    sources:
+      - name: openinference
+service:
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - gen_ai_normalizer
+      exporters:
+        - sumologic
