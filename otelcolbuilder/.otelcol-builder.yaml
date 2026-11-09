@@ -217,3 +217,5 @@ replaces:
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/globprovider => ../../pkg/configprovider/globprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/opampprovider => ../../pkg/configprovider/opampprovider
   - github.com/SumoLogic/sumologic-otel-collector/pkg/configprovider/providerutil => ../../pkg/configprovider/providerutil
+  # Upstream components select an older brotli. Force the version linked into the binary.
+  - github.com/andybalholm/brotli => github.com/andybalholm/brotli v1.2.8

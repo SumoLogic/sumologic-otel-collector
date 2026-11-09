@@ -88,3 +88,6 @@ require (
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
+
+// Upstream components select an older brotli. Force v1.2.8 when this module is the main module.
+replace github.com/andybalholm/brotli => github.com/andybalholm/brotli v1.2.8

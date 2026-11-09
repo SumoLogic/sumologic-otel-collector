@@ -795,3 +795,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	skywalking.apache.org/repo/goapi v0.0.0-20240104145220-ba7202308dd4 // indirect
 )
+
+// Upstream components select an older brotli. Force v1.2.8 when this module is the main module.
+replace github.com/andybalholm/brotli => github.com/andybalholm/brotli v1.2.8
