@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- towncrier release notes -->
 
+## [v0.165.0-sumo-0]
+
+### Released 2026-11-10
+
+### Breaking Changes
+
+- chore: remove deprecated signalfx receiver [#2178]
+
+### Added
+
+- feat: Add enable/disable-telemetry-reporting to otel config builder [#2173]
+
+### Changed
+
+- chore(deps): bump opentelemetry-collector [#2177]
+
+[#2178]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2178
+[#2173]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2173
+[#2177]: https://github.com/SumoLogic/sumologic-otel-collector/pull/2177
+[v0.165.0-sumo-0]: https://github.com/SumoLogic/sumologic-otel-collector/releases/v0.165.0-sumo-0
+
 ## [v0.163.0-sumo-0]
 
 ### Released 2026-10-21
