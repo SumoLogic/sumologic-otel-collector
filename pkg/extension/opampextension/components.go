@@ -131,7 +131,6 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/riakreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/saphanareceiver"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/signalfxreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/skywalkingreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/snmpreceiver"
@@ -252,7 +251,6 @@ func Components() (
 		receivercreator.NewFactory(),
 		riakreceiver.NewFactory(),
 		saphanareceiver.NewFactory(),
-		signalfxreceiver.NewFactory(),
 		skywalkingreceiver.NewFactory(),
 		snowflakereceiver.NewFactory(),
 		snmpreceiver.NewFactory(),
