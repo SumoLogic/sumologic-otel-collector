@@ -21,6 +21,14 @@ on:
           - "full"
           - "lookup"
           - "extract"
+      coreVersion:
+        description: "Pin core (go.opentelemetry.io/collector) to at most this 0.x version, e.g. 0.165.0. Leave empty for latest."
+        type: string
+        default: ""
+      contribVersion:
+        description: "Pin contrib (opentelemetry-collector-contrib) to at most this 0.x version, e.g. 0.165.1. Leave empty for latest."
+        type: string
+        default: ""
 
 concurrency: renovate
 
@@ -42,6 +50,70 @@ jobs:
           app-id: ${{ secrets.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
 
+      # Optionally cap the versions Renovate may bump to. The rules are appended to the
+      # ones in renovate.json5 (via RENOVATE_CONFIG), so they take precedence. Stable
+      # (v1.x+) modules are never capped, only 0.x versions are limited to <= the pin.
+      - name: Build version pin config
+        id: pin
+        env:
+          CORE_VERSION: ${{ inputs.coreVersion }}
+          CONTRIB_VERSION: ${{ inputs.contribVersion }}
+        run: |
+          set -euo pipefail
+
+          # Regex matching 0.0.x .. 0.<minor>.x, with an optional leading "v", plus any v1+ version.
+          cap_regex() {
+            local minor="$1" alts="[0-9]"
+            if (( minor < 10 || minor > 199 )); then
+              if (( minor < 10 )); then
+                echo "^v?(?:0\\.[0-${minor}]\\.[0-9]+|[1-9][0-9]*\\.[0-9]+\\.[0-9]+)$"
+                return
+              fi
+              echo "::error::Unsupported minor version ${minor}; extend cap_regex" >&2
+              exit 1
+            fi
+            alts="[0-9]|[1-9][0-9]"
+            if (( minor >= 100 )); then
+              local t=$(( (minor % 100) / 10 )) o=$(( minor % 10 ))
+              (( t > 0 )) && alts="${alts}|1[0-$((t - 1))][0-9]"
+              alts="${alts}|1${t}[0-${o}]"
+            else
+              local t=$(( minor / 10 )) o=$(( minor % 10 ))
+              alts="[0-9]"
+              (( t > 1 )) && alts="${alts}|[1-$((t - 1))][0-9]"
+              alts="${alts}|${t}[0-${o}]"
+            fi
+            echo "^v?(?:0\\.(?:${alts})\\.[0-9]+|[1-9][0-9]*\\.[0-9]+\\.[0-9]+)$"
+          }
+
+          rules=()
+          add_rule() {
+            local label="$1" version="$2" pattern="$3"
+            [[ -z "${version}" ]] && return 0
+            if [[ ! "${version}" =~ ^0\.([0-9]+)\.[0-9]+$ ]]; then
+              echo "::error::${label} version '${version}' must look like 0.<minor>.<patch>" >&2
+              exit 1
+            fi
+            local re
+            re="$(cap_regex "${BASH_REMATCH[1]}")"
+            rules+=("$(jq -cn --arg p "${pattern}" --arg re "/${re}/" \
+              '{matchPackageNames: [$p], allowedVersions: $re}')")
+            echo "Pinning ${label} to ${version} (allowedVersions: /${re}/)"
+          }
+
+          add_rule "core" "${CORE_VERSION}" '/^go\.opentelemetry\.io\/collector.*$/'
+          add_rule "contrib" "${CONTRIB_VERSION}" '/^github\.com\/open-telemetry\/opentelemetry-collector-contrib.*$/'
+
+          if (( ${#rules[@]} == 0 )); then
+            echo "No version pin requested; running with renovate.json5 as-is."
+            echo "config=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          config="$(printf '%s\n' "${rules[@]}" | jq -cs '{packageRules: .}')"
+          echo "RENOVATE_CONFIG=${config}"
+          echo "config=${config}" >> "$GITHUB_OUTPUT"
+
       - name: Renovate run (dry-run)
         if: inputs.dryRun != 'none' && inputs.dryRun != ''
         uses: renovatebot/github-action@v46.3.0
@@ -50,6 +122,7 @@ jobs:
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_ONBOARDING: "false"
           RENOVATE_DRY_RUN: ${{ inputs.dryRun }}
+          RENOVATE_CONFIG: ${{ steps.pin.outputs.config }}
         with:
           token: ${{ steps.app-token.outputs.token }}
           configurationFile: renovate.json5
@@ -61,6 +134,7 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_ONBOARDING: "false"
+          RENOVATE_CONFIG: ${{ steps.pin.outputs.config }}
         with:
           token: ${{ steps.app-token.outputs.token }}
           configurationFile: renovate.json5
