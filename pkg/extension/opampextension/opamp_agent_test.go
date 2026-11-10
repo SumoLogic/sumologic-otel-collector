@@ -153,7 +153,6 @@ func TestApplyRemoteConfig(t *testing.T) {
 		{"ApplyReceiverCreatorConfig", "testdata/opamp.d/opamp-receiver-creator-config.yaml", false, ""},
 		{"ApplyRiakReceiverConfig", "testdata/opamp.d/opamp-riak-receiver-config.yaml", false, ""},
 		{"ApplySaphanaReceiverConfig", "testdata/opamp.d/opamp-saphana-receiver-config.yaml", false, ""},
-		{"ApplySignalFxReceiverConfig", "testdata/opamp.d/opamp-signalfx-receiver-config.yaml", false, ""},
 		{"ApplySkyWalkingReceiverConfig", "testdata/opamp.d/opamp-skywalking-receiver-config.yaml", false, ""},
 		{"ApplySnowflakeReceiverConfig", "testdata/opamp.d/opamp-snowflake-receiver-config.yaml", false, ""},
 		{"ApplySolaceReceiverConfig", "testdata/opamp.d/opamp-solace-receiver-config.yaml", false, ""},

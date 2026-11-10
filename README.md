@@ -118,7 +118,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 |                  [redis][redisreceiver]                  |                                                              |                                        |                                             |                                             |
 |                   [riak][riakreceiver]                   |                                                              |                                        |                                             |                                             |
 |                [saphana][saphanareceiver]                |                                                              |                                        |                                             |                                             |
-|               [signalfx][signalfxreceiver]               |                                                              |                                        |                                             |                                             |
 |             [skywalking][skywalkingreceiver]             |                                                              |                                        |                                             |                                             |
 |              [snowflake][snowflakereceiver]              |                                                              |                                        |                                             |                                             |
 |                   [snmp][snmpreceiver]                   |                                                              |                                        |                                             |                                             |
@@ -216,7 +215,6 @@ The ⚠️ ~~strikethrough~~ ⚠️ components are deprecated.
 [redisreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/redisreceiver
 [riakreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/riakreceiver
 [saphanareceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/saphanareceiver
-[signalfxreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/signalfxreceiver
 [skywalkingreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/skywalkingreceiver
 [snmpreceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/snmpreceiver
 [snowflakereceiver]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.163.0/receiver/snowflakereceiver

@@ -170,7 +170,6 @@ This section lists the components supported for remote configuration validation 
 |          riak          |                      |               |                      |            |
 |        saphana         |                      |               |                      |            |
 |          sapm          |                      |               |                      |            |
-|        signalfx        |                      |               |                      |            |
 |       skywalking       |                      |               |                      |            |
 |       snowflake        |                      |               |                      |            |
 |          snmp          |                      |               |                      |            |
