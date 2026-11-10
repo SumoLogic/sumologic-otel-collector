@@ -90,4 +90,5 @@ require (
 )
 
 // Upstream components select an older brotli. Force v1.2.8 when this module is the main module.
+// Remove this replace once this mholt bumps min brotli version: https://github.com/mholt/archives/pull/94
 replace github.com/andybalholm/brotli => github.com/andybalholm/brotli v1.2.8
