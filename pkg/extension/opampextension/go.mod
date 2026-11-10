@@ -794,4 +794,5 @@ require (
 )
 
 // Upstream components select an older brotli. Force v1.2.8 when this module is the main module.
+// Todo: Remove this replace once brotli is bumped >=1.2.8 in upstream contrib repo. Currently it's 1.2.7 in latest release
 replace github.com/andybalholm/brotli => github.com/andybalholm/brotli v1.2.8
