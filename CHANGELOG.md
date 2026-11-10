@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- chore: remove deprecated signalfx receiver [#2178]
+- chore: signalfx receiver is no longer available, Use the OTLP receiver instead.[#2178]
 
 ### Added
 
